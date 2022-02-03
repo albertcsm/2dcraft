@@ -1,0 +1,26 @@
+import 'phaser';
+import ScrollScene from './scene/scroll-scene'
+import './style.css'
+
+const config: Phaser.Types.Core.GameConfig = {
+  type: Phaser.AUTO,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 800,
+    height: 600
+  },
+  physics: {
+    default: 'arcade',
+    arcade: {
+      gravity: { y: 600 },
+      // debug: true,
+      // debugShowBody: true,
+      // debugShowStaticBody: true,
+    },
+  },
+  scene: ScrollScene
+}
+
+new Phaser.Game(config);
+
