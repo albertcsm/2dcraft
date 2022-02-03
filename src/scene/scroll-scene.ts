@@ -16,7 +16,7 @@ export default class ScrollScene extends Phaser.Scene {
 
     preload() {
         this.load.image('sky', Textures.skyImage)
-        this.load.spritesheet('dude', Textures.dudeSprite, { frameWidth: 32, frameHeight: 48 });
+        this.load.spritesheet('player', Textures.alexSprite, { frameWidth: 200, frameHeight: 288 });
         this.load.tilemapTiledJSON('worldMap', worldMapData);
         this.load.image('terrainTexture', Textures.terrainTexture);
         this.load.bitmapFont('atari', Textures.fontAtariImage, Textures.fontAtariMetadata);
@@ -30,24 +30,24 @@ export default class ScrollScene extends Phaser.Scene {
         const tileset1 = this.tilemap.addTilesetImage('terrain', 'terrainTexture');
         this.terrainLayer = this.tilemap.createLayer('World1', tileset1, 0, 0).setScale(1).setCollisionByExclusion([-1, ...GRASS_INDICES]);
 
-        this.player = this.physics.add.sprite(100, 300, 'dude');
+        this.player = this.physics.add.sprite(100, 300, 'player').setSize(90, 260).setScale(0.2);
     
         this.anims.create({
             key: 'left',
-            frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
             frameRate: 10,
             repeat: -1
         });
     
         this.anims.create({
             key: 'turn',
-            frames: [ { key: 'dude', frame: 4 } ],
+            frames: [ { key: 'player', frame: 4 } ],
             frameRate: 20
         });
     
         this.anims.create({
             key: 'right',
-            frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+            frames: this.anims.generateFrameNumbers('player', { start: 5, end: 8 }),
             frameRate: 10,
             repeat: -1
         });
@@ -66,7 +66,7 @@ export default class ScrollScene extends Phaser.Scene {
     
     update() {
         if (this.cursors.up.isDown && this.player.body.blocked.down) {
-            this.player.setVelocityY(-300);   
+            this.player.setVelocityY(-250);   
         }
 
         if (this.cursors.left.isDown) {

@@ -3,7 +3,7 @@ import skyImage from '../assets/background/sky.png';
 // @ts-ignore
 import terrainTexture from '../assets/terrain/terrain.png';
 // @ts-ignore
-import dudeSprite from '../assets/character/dude.png';
+import alexSprite from '../assets/character/alex.png';
 // @ts-ignore
 import fontAtariImage from '../assets/font/atari.png';
 // @ts-ignore
@@ -12,7 +12,7 @@ import fontAtariMetadata from '../assets/font/atari.xml';
 export default class Textures {
     static skyImage: string = skyImage;
     static terrainTexture: string = terrainTexture;
-    static dudeSprite: string = dudeSprite;
+    static alexSprite: string = alexSprite;
     static fontAtariImage = fontAtariImage;
     static fontAtariMetadata = fontAtariMetadata;
 }
