@@ -10,7 +10,12 @@ export default class ScrollScene extends Phaser.Scene {
     private tilemap: Phaser.Tilemaps.Tilemap
     private terrainLayer: Phaser.Tilemaps.TilemapLayer
     private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    private cursors: Phaser.Types.Input.Keyboard.CursorKeys
+    private keyUp: Phaser.Input.Keyboard.Key
+    private keyLeft: Phaser.Input.Keyboard.Key
+    private keyDown: Phaser.Input.Keyboard.Key
+    private keyRight: Phaser.Input.Keyboard.Key
+    private keyJump: Phaser.Input.Keyboard.Key
+    private keyBreak: Phaser.Input.Keyboard.Key
     private facing: number = 0
     private breakingTile: boolean = false
 
@@ -40,21 +45,41 @@ export default class ScrollScene extends Phaser.Scene {
         });
     
         this.anims.create({
-            key: 'turn',
-            frames: [ { key: 'player', frame: 4 } ],
-            frameRate: 20
-        });
-    
-        this.anims.create({
             key: 'right',
-            frames: this.anims.generateFrameNumbers('player', { start: 5, end: 8 }),
+            frames: this.anims.generateFrameNumbers('player', { start: 4, end: 7 }),
             frameRate: 10,
             repeat: -1
         });
     
+        this.anims.create({
+            key: 'left-up',
+            frames: [ { key: 'player', frame: 8 } ]
+        });
+
+        this.anims.create({
+            key: 'left-down',
+            frames: [ { key: 'player', frame: 9 } ]
+        });
+
+        this.anims.create({
+            key: 'right-up',
+            frames: [ { key: 'player', frame: 10 } ]
+        });
+
+        this.anims.create({
+            key: 'right-down',
+            frames: [ { key: 'player', frame: 11 } ]
+        });
+    
         this.player.anims.play('right', true);
 
-        this.cursors = this.input.keyboard.createCursorKeys();
+        // this.cursors = this.input.keyboard.createCursorKeys();
+        this.keyUp = this.input.keyboard.addKey('w')
+        this.keyLeft = this.input.keyboard.addKey('a')
+        this.keyDown = this.input.keyboard.addKey('s')
+        this.keyRight = this.input.keyboard.addKey('d')
+        this.keyJump = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
+        this.keyBreak = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.PERIOD)
 
         this.physics.add.collider(this.player, this.terrainLayer);
 
@@ -65,28 +90,38 @@ export default class ScrollScene extends Phaser.Scene {
     }
     
     update() {
-        if (this.cursors.up.isDown && this.player.body.blocked.down) {
-            this.player.setVelocityY(-250);   
+        if (this.keyJump.isDown && this.player.body.blocked.down) {
+            this.player.setVelocityY(-280);   
         }
 
-        if (this.cursors.left.isDown) {
+        if (this.keyLeft.isDown) {
             this.facing = -1
             this.player.setVelocityX(-160);
             this.player.anims.play('left', true);
-        } else if (this.cursors.right.isDown) {
+        } else if (this.keyRight.isDown) {
             this.facing = +1
             this.player.setVelocityX(160);
             this.player.anims.play('right', true);
-        } else if (this.player.body.blocked.down) {
+        } else {
             this.player.setVelocityX(0);
-            this.player.anims.stop();
-        }
+            if (this.keyUp.isDown) {
+                this.player.anims.play(`${this.facing < 0 ? 'left' : 'right'}-up`, true);
+            } else if (this.keyDown.isDown) {
+                this.player.anims.play(`${this.facing < 0 ? 'left' : 'right'}-down`, true);
+            } else if (this.player.body.blocked.down) {
+                this.player.anims.play(this.facing < 0 ? 'left' : 'right', true);
+                this.player.anims.stop();
+            }
+        } 
         
-        if (this.cursors.space.isDown && !this.breakingTile) {
+        if (this.keyBreak.isDown && !this.breakingTile) {
             let tile;
-            if (this.cursors.down.isDown) {
+            if (this.keyDown.isDown) {
                 let pos = this.player.getBottomCenter()
                 tile = this.findTileToInteract(pos.x, pos.y, TILE_SIZE/2, 0);
+            } else if (this.keyUp.isDown) {
+                let pos = this.player.getTopCenter()
+                tile = this.findTileToInteract(pos.x + this.facing * TILE_SIZE/2, pos.y - TILE_SIZE/2, TILE_SIZE/2, TILE_SIZE/2);
             } else if (this.facing === -1) {
                 let pos = this.player.getLeftCenter()
                 tile = this.findTileToInteract(pos.x - TILE_SIZE/2, pos.y, 0, TILE_SIZE/2);
@@ -99,7 +134,7 @@ export default class ScrollScene extends Phaser.Scene {
                 this.breakTile(tile.x, tile.y)
                 this.breakingTile = true;
             }
-        } else if (this.cursors.space.isUp) {
+        } else if (this.keyBreak.isUp) {
             this.breakingTile = false;
         }
     }
