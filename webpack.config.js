@@ -11,7 +11,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'Pixiball - development',
+      title: '2D Craft',
     }),
   ],
   module: {
