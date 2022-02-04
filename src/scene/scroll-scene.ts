@@ -121,13 +121,13 @@ export default class ScrollScene extends Phaser.Scene {
                 tile = this.findTileToInteract(pos.x, pos.y, TILE_SIZE/2, 0);
             } else if (this.keyUp.isDown) {
                 let pos = this.player.getTopCenter()
-                tile = this.findTileToInteract(pos.x + this.facing * TILE_SIZE/2, pos.y - TILE_SIZE/2, TILE_SIZE/2, TILE_SIZE/2);
+                tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_SIZE, 0);
             } else if (this.facing === -1) {
                 let pos = this.player.getLeftCenter()
-                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, pos.y, 0, TILE_SIZE/2);
+                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, pos.y - TILE_SIZE/2, 0, TILE_SIZE/2);
             } else if (this.facing === 1) {
                 let pos = this.player.getRightCenter()
-                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, pos.y, 0, TILE_SIZE/2);
+                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, pos.y - TILE_SIZE/2, 0, TILE_SIZE/2);
             }
 
             if (tile) {
