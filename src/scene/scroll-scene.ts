@@ -10,6 +10,8 @@ export default class ScrollScene extends Phaser.Scene {
     private tilemap: Phaser.Tilemaps.Tilemap
     private terrainLayer: Phaser.Tilemaps.TilemapLayer
     private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+    private playerDisabledUntil: number = 0
+    private playerPassiveVelocity: Phaser.Math.Vector2 = new Phaser.Math.Vector2(0,0)
     private keyUp: Phaser.Input.Keyboard.Key
     private keyLeft: Phaser.Input.Keyboard.Key
     private keyDown: Phaser.Input.Keyboard.Key
@@ -18,12 +20,14 @@ export default class ScrollScene extends Phaser.Scene {
     private keyBreak: Phaser.Input.Keyboard.Key
     private facing: number = 0
     private breakingTile: boolean = false
+    private explosionEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
 
     preload() {
         this.load.image('sky', Textures.skyImage)
         this.load.spritesheet('player', Textures.alexSprite, { frameWidth: 200, frameHeight: 288 });
         this.load.tilemapTiledJSON('worldMap', worldMapData);
         this.load.image('terrainTexture', Textures.terrainTexture);
+        this.load.image('explosionEffectImage', Textures.explosionEffectImage);
         this.load.bitmapFont('atari', Textures.fontAtariImage, Textures.fontAtariMetadata);
     }
     
@@ -73,6 +77,17 @@ export default class ScrollScene extends Phaser.Scene {
     
         this.player.anims.play('right', true);
 
+        this.explosionEmitter = this.add.particles('explosionEffectImage').createEmitter({
+            speed: { min: 50, max: 150 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.3, end: 0.0 },
+            alpha: 0.1,
+            blendMode: Phaser.BlendModes.ADD,
+            active: false,
+            lifespan: 500,
+            gravityY: 200
+        });;
+
         // this.cursors = this.input.keyboard.createCursorKeys();
         this.keyUp = this.input.keyboard.addKey('w')
         this.keyLeft = this.input.keyboard.addKey('a')
@@ -82,6 +97,7 @@ export default class ScrollScene extends Phaser.Scene {
         this.keyBreak = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.PERIOD)
 
         this.physics.add.collider(this.player, this.terrainLayer);
+        this.terrainLayer.setTileIndexCallback(9, this.touchTnt.bind(this), {});
 
         this.add.bitmapText(8, 8, 'atari', '2D Craft').setOrigin(0).setScale(0.4).setScrollFactor(0);
 
@@ -90,6 +106,14 @@ export default class ScrollScene extends Phaser.Scene {
     }
     
     update() {
+        if (Date.now() < this.playerDisabledUntil) {
+            if (this.playerPassiveVelocity.x !== 0 || this.playerPassiveVelocity.y !== 0) {
+                this.player.setVelocity(this.playerPassiveVelocity.x, this.playerPassiveVelocity.y)
+                this.playerPassiveVelocity = new Phaser.Math.Vector2(0, 0)
+            }
+            return;
+        }
+
         if (this.keyJump.isDown && this.player.body.blocked.down) {
             this.player.setVelocityY(-280);   
         }
@@ -121,7 +145,7 @@ export default class ScrollScene extends Phaser.Scene {
                 tile = this.findTileToInteract(pos.x, pos.y, TILE_SIZE/2, 0);
             } else if (this.keyUp.isDown) {
                 let pos = this.player.getTopCenter()
-                tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_SIZE, 0);
+                tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE/2);
             } else if (this.facing === -1) {
                 let pos = this.player.getLeftCenter()
                 tile = this.findTileToInteract(pos.x - TILE_SIZE/2, pos.y - TILE_SIZE/2, 0, TILE_SIZE/2);
@@ -162,4 +186,28 @@ export default class ScrollScene extends Phaser.Scene {
             this.terrainLayer.removeTileAt(upperTile.x, upperTile.y)
         }
     }
+
+    private touchTnt(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {
+        this.explosionEmitter.resume();
+        this.explosionEmitter.explode(10, tile.getCenterX(), tile.getCenterY());
+        this.breakTile(tile.x, tile.y)
+        this.breakTile(tile.x - 1, tile.y)
+        this.breakTile(tile.x + 1, tile.y)
+        this.breakTile(tile.x, tile.y - 1)
+        this.breakTile(tile.x, tile.y + 1)  
+        Math.random() > 0.1 || this.breakTile(tile.x - 1, tile.y - 1)
+        Math.random() > 0.1 || this.breakTile(tile.x - 1, tile.y + 1)
+        Math.random() > 0.1 || this.breakTile(tile.x + 1, tile.y - 1)
+        Math.random() > 0.1 || this.breakTile(tile.x + 1, tile.y + 1)
+        Math.random() > 0.5 || this.breakTile(tile.x - 2, tile.y)
+        Math.random() > 0.5 || this.breakTile(tile.x + 2, tile.y)
+        Math.random() > 0.5 || this.breakTile(tile.x, tile.y - 2)
+        Math.random() > 0.5 || this.breakTile(tile.x, tile.y + 2)
+        let pos = this.player.getCenter()
+        let vx = Math.sign(pos.x - tile.getCenterX()) * 100;
+        let vy = Math.sign(pos.y - tile.getCenterY()) * 100;
+        this.playerPassiveVelocity = new Phaser.Math.Vector2(vx, vy)
+        this.playerDisabledUntil = Date.now() + 400;
+    }
+
 }
