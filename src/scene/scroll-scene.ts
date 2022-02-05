@@ -23,6 +23,7 @@ export default class ScrollScene extends Phaser.Scene {
     private playerDisabledUntil: number
     private playerInvincibleUntil: number
     private playerPassiveVelocity: Phaser.Math.Vector2
+    private shouldSpreadLavaAfter: number
     private gotChest: boolean
     private keyUp: Phaser.Input.Keyboard.Key
     private keyLeft: Phaser.Input.Keyboard.Key
@@ -53,6 +54,7 @@ export default class ScrollScene extends Phaser.Scene {
         this.playerDisabledUntil = 0
         this.playerInvincibleUntil = 0
         this.playerPassiveVelocity = new Phaser.Math.Vector2(0,0)
+        this.shouldSpreadLavaAfter = 0
         this.gotChest = false
         this.facing = +1
 
@@ -61,7 +63,7 @@ export default class ScrollScene extends Phaser.Scene {
     
         this.tilemap = this.make.tilemap({ key: 'worldMap' });
         const tileset1 = this.tilemap.addTilesetImage('terrain', 'terrainTexture');
-        this.terrainLayer = this.tilemap.createLayer('World1', tileset1, 0, 0).setScale(1).setCollisionByExclusion([-1, ...GRASS_INDICES]);
+        this.terrainLayer = this.tilemap.createLayer('World1', tileset1, 0, 0).setScale(1).setCollisionByExclusion([-1, ...GRASS_INDICES, LAVA_INDEX]);
 
         this.player = this.physics.add.sprite(100, 300, 'player').setSize(90, 260).setScale(0.2);
         this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
@@ -162,6 +164,10 @@ export default class ScrollScene extends Phaser.Scene {
             return;
         }
 
+        if (Date.now() > this.shouldSpreadLavaAfter) {
+            this.spreadLava();
+        }
+
         if (this.keyJump.isDown && this.player.body.blocked.down) {
             this.player.setVelocityY(-280);   
         }
@@ -211,6 +217,51 @@ export default class ScrollScene extends Phaser.Scene {
         }
     }
 
+    private spreadLava() {
+        let tile: Phaser.Tilemaps.Tile
+        let newLavaLocations: Phaser.Math.Vector2[] = []
+        for (let i = 0; tile = this.terrainLayer.findByIndex(LAVA_INDEX, i); i++) {
+            // if it is falling, don't spread horizontally
+            if (this.canSpreadLavaTo(tile.x, tile.y + 1)) {
+                newLavaLocations.push(new Phaser.Math.Vector2(tile.x, tile.y + 1))
+            } else {
+                // spread horizontally, but avoid spreading like firewall
+                if (this.canSpreadLavaTo(tile.x - 1, tile.y)) {
+                    newLavaLocations.push(new Phaser.Math.Vector2(tile.x - 1, tile.y))
+                }
+                if (this.canSpreadLavaTo(tile.x + 1, tile.y)) {
+                    newLavaLocations.push(new Phaser.Math.Vector2(tile.x + 1, tile.y))
+                }
+            }
+        }
+
+        if (newLavaLocations.length > 0) {
+            for (let location of newLavaLocations) {
+                this.terrainLayer.putTileAt(LAVA_INDEX, location.x, location.y, false)
+            }
+            this.shouldSpreadLavaAfter = Date.now() + 1000
+        } else {
+            this.shouldSpreadLavaAfter = Infinity
+        }
+    }
+
+    private canSpreadLavaTo(x: number, y: number) {
+        if (x < 0 || x >= this.tilemap.width || y < 0 || y >= this.tilemap.height) {
+            return false
+        }
+
+        let tile = this.terrainLayer.getTileAt(x, y)
+        if (!tile) {
+            return true
+        }
+        
+        if (GRASS_INDICES.includes(tile.index)) {
+            return true
+        } else {
+            return false
+        }
+    }
+
     private findTileToInteract(worldX: number, worldY: number, toleranceX: number, toleranceY: number): Phaser.Tilemaps.Tile {
         let tiles: Phaser.Tilemaps.Tile[] = []
         for (let i = worldX - toleranceX; i <= worldX + toleranceX + 0.1; i += TILE_SIZE) {
@@ -233,6 +284,7 @@ export default class ScrollScene extends Phaser.Scene {
         if (upperTile && GRASS_INDICES.includes(upperTile.index)) {
             this.terrainLayer.removeTileAt(upperTile.x, upperTile.y)
         }
+        this.shouldSpreadLavaAfter = Math.min(Date.now() + 1000, this.shouldSpreadLavaAfter)
     }
 
     private touchTnt(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {
