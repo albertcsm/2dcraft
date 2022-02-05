@@ -1,6 +1,7 @@
 import 'phaser';
 import ScrollScene from './scene/scroll-scene'
 import GameoverScene from './scene/gameover-scene';
+import WinningScene from './scene/winning-scene';
 import './style.css'
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -20,7 +21,7 @@ const config: Phaser.Types.Core.GameConfig = {
       // debugShowStaticBody: true,
     },
   },
-  scene: [ScrollScene, GameoverScene]
+  scene: [ScrollScene, GameoverScene, WinningScene]
 }
 
 new Phaser.Game(config);

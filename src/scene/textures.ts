@@ -11,6 +11,8 @@ import heartImage from '../assets/overlay/heart.gif';
 // @ts-ignore
 import buttonImage from '../assets/overlay/button.png';
 // @ts-ignore
+import trophyImage from '../assets/overlay/trophy.png';
+// @ts-ignore
 import fontAtariImage from '../assets/font/atari.png';
 // @ts-ignore
 import fontAtariMetadata from '../assets/font/atari.xml';
@@ -22,6 +24,7 @@ export default class Textures {
     static explosionEffectImage = explosionEffectImage;
     static heartImage = heartImage;
     static buttonImage = buttonImage;
+    static trophyImage = trophyImage;
     static fontAtariImage = fontAtariImage;
     static fontAtariMetadata = fontAtariMetadata;
 }

@@ -5,6 +5,8 @@ import { SceneNames } from './scene-names';
 
 const TILE_SIZE = 32
 const GRASS_INDICES = [90]
+const TNT_INDEX = 9
+const CHEST_INDEX = 28
 const MAX_LIVES = 3
 const INIT_LIVES = 3
 
@@ -17,6 +19,7 @@ export default class ScrollScene extends Phaser.Scene {
     private playerLiveImages: Phaser.GameObjects.Image[]
     private playerDisabledUntil: number
     private playerPassiveVelocity: Phaser.Math.Vector2
+    private gotChest: boolean
     private keyUp: Phaser.Input.Keyboard.Key
     private keyLeft: Phaser.Input.Keyboard.Key
     private keyDown: Phaser.Input.Keyboard.Key
@@ -45,6 +48,7 @@ export default class ScrollScene extends Phaser.Scene {
         this.playerLives = INIT_LIVES
         this.playerDisabledUntil = 0
         this.playerPassiveVelocity = new Phaser.Math.Vector2(0,0)
+        this.gotChest = false
         this.facing = +1
 
         this.cameras.main.setBackgroundColor('#adc8ff')
@@ -118,7 +122,8 @@ export default class ScrollScene extends Phaser.Scene {
         this.keyBreak = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.PERIOD)
 
         this.physics.add.collider(this.player, this.terrainLayer);
-        this.terrainLayer.setTileIndexCallback(9, this.touchTnt, this);
+        this.terrainLayer.setTileIndexCallback(TNT_INDEX, this.touchTnt, this);
+        this.terrainLayer.setTileIndexCallback(CHEST_INDEX, this.touchChest, this);
 
         this.add.bitmapText(8, 8, 'atari', '2D Craft').setOrigin(0).setScale(0.4).setScrollFactor(0);
 
@@ -127,7 +132,10 @@ export default class ScrollScene extends Phaser.Scene {
     }
     
     update() {
-        if (this.playerLives === 0) {
+        if (this.gotChest) {
+            this.scene.pause();
+            this.scene.run(SceneNames.WINNING);
+        } else if (this.playerLives === 0) {
             this.scene.pause();
             this.scene.run(SceneNames.GAMEOVER);
         }
@@ -240,6 +248,10 @@ export default class ScrollScene extends Phaser.Scene {
         if (this.playerLives > 0) {
             this.playerLives--
         }
+    }
+
+    private touchChest(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {
+        this.gotChest = true;
     }
 
 }
