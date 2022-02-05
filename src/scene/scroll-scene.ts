@@ -6,6 +6,7 @@ import { SceneNames } from './scene-names';
 const TILE_SIZE = 32
 const GRASS_INDICES = [90]
 const TNT_INDEX = 9
+const LAVA_INDEX = 238
 const CHEST_INDEX = 28
 const MAX_LIVES = 3
 const INIT_LIVES = 3
@@ -20,6 +21,7 @@ export default class ScrollScene extends Phaser.Scene {
     private playerLives: number
     private playerLiveImages: Phaser.GameObjects.Image[]
     private playerDisabledUntil: number
+    private playerInvincibleUntil: number
     private playerPassiveVelocity: Phaser.Math.Vector2
     private gotChest: boolean
     private keyUp: Phaser.Input.Keyboard.Key
@@ -49,6 +51,7 @@ export default class ScrollScene extends Phaser.Scene {
     create() {
         this.playerLives = INIT_LIVES
         this.playerDisabledUntil = 0
+        this.playerInvincibleUntil = 0
         this.playerPassiveVelocity = new Phaser.Math.Vector2(0,0)
         this.gotChest = false
         this.facing = +1
@@ -127,6 +130,7 @@ export default class ScrollScene extends Phaser.Scene {
 
         this.physics.add.collider(this.player, this.terrainLayer);
         this.terrainLayer.setTileIndexCallback(TNT_INDEX, this.touchTnt, this);
+        this.terrainLayer.setTileIndexCallback(LAVA_INDEX, this.touchLava, this);
         this.terrainLayer.setTileIndexCallback(CHEST_INDEX, this.touchChest, this);
 
         this.add.bitmapText(8, 8, 'atari', '2D Craft').setOrigin(0).setScale(0.4).setScrollFactor(0);
@@ -249,13 +253,31 @@ export default class ScrollScene extends Phaser.Scene {
         let vy = Math.sign(pos.y - tile.getCenterY()) * 100;
         this.playerPassiveVelocity = new Phaser.Math.Vector2(vx, vy)
         this.playerDisabledUntil = Date.now() + 400;
-        if (this.playerLives > 0) {
-            this.playerLives--
-        }
+        this.hurtPlayer()
+    }
+
+    private touchLava(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {
+        this.hurtPlayer()
     }
 
     private touchChest(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {
         this.gotChest = true;
     }
 
+    private hurtPlayer() {
+        if (Date.now() > this.playerInvincibleUntil) {
+            this.playerInvincibleUntil = Date.now() + 1000;
+            if (this.playerLives > 0) {
+                this.playerLives--
+            }
+
+            this.tweens.add({
+                targets: this.player,
+                alpha: 0,
+                duration: 100,
+                yoyo: true,
+                repeat: 5,
+            })
+        }
+    }
 }
