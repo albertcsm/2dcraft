@@ -8,6 +8,7 @@ const GRASS_INDICES = [90]
 const TNT_INDEX = 9
 const LAVA_INDEX = 238
 const CHEST_INDEX = 28
+const STONE_INDEX = 2
 const MAX_LIVES = 3
 const INIT_LIVES = 3
 const WORLD_WIDTH = 3200
@@ -30,9 +31,11 @@ export default class ScrollScene extends Phaser.Scene {
     private keyDown: Phaser.Input.Keyboard.Key
     private keyRight: Phaser.Input.Keyboard.Key
     private keyJump: Phaser.Input.Keyboard.Key
+    private keyPut: Phaser.Input.Keyboard.Key
     private keyBreak: Phaser.Input.Keyboard.Key
     private facing: number
-    private breakingTile: boolean = false
+    private puttingTile: boolean
+    private breakingTile: boolean
     private explosionEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
 
     constructor() {
@@ -57,6 +60,8 @@ export default class ScrollScene extends Phaser.Scene {
         this.shouldSpreadLavaAfter = 0
         this.gotChest = false
         this.facing = +1
+        this.puttingTile = false
+        this.breakingTile = false
 
         this.cameras.main.setBackgroundColor('#adc8ff')
         this.add.image(0, 0, 'sky').setOrigin(0, 0).setScrollFactor(0.02, 0);
@@ -128,6 +133,7 @@ export default class ScrollScene extends Phaser.Scene {
         this.keyDown = this.input.keyboard.addKey('s')
         this.keyRight = this.input.keyboard.addKey('d')
         this.keyJump = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
+        this.keyPut = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.COMMA)
         this.keyBreak = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.PERIOD)
 
         this.physics.add.collider(this.player, this.terrainLayer);
@@ -192,6 +198,31 @@ export default class ScrollScene extends Phaser.Scene {
             }
         } 
         
+        if (this.keyPut.isDown && !this.puttingTile) {
+            if (this.facing === -1) {
+                let pos = this.player.getLeftCenter()
+                pos.x -= TILE_SIZE/2
+                let x = Math.floor(pos.x / TILE_SIZE)
+                let y = Math.floor(pos.y / TILE_SIZE)
+                let tile = this.terrainLayer.getTileAt(x, y)
+                if (!tile || GRASS_INDICES.includes(tile.index)) {
+                    this.terrainLayer.putTileAt(STONE_INDEX, x, y)
+                }
+            } else if (this.facing === 1) {
+                let pos = this.player.getRightCenter()
+                pos.x += TILE_SIZE/2
+                let x = Math.floor(pos.x / TILE_SIZE)
+                let y = Math.floor(pos.y / TILE_SIZE)
+                let tile = this.terrainLayer.getTileAt(x, y)
+                if (!tile || GRASS_INDICES.includes(tile.index)) {
+                    this.terrainLayer.putTileAt(STONE_INDEX, x, y)
+                }
+            }
+            this.puttingTile = true
+        } else if (this.keyPut.isUp) {
+            this.puttingTile = false
+        }
+
         if (this.keyBreak.isDown && !this.breakingTile) {
             let tile;
             if (this.keyDown.isDown) {
