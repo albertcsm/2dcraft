@@ -7,6 +7,10 @@ import alexSprite from '../assets/character/alex.png';
 // @ts-ignore
 import explosionEffectImage from '../assets/effect/explosion.png';
 // @ts-ignore
+import heartImage from '../assets/overlay/heart.gif';
+// @ts-ignore
+import buttonImage from '../assets/overlay/button.png';
+// @ts-ignore
 import fontAtariImage from '../assets/font/atari.png';
 // @ts-ignore
 import fontAtariMetadata from '../assets/font/atari.xml';
@@ -16,6 +20,8 @@ export default class Textures {
     static terrainTexture: string = terrainTexture;
     static alexSprite: string = alexSprite;
     static explosionEffectImage = explosionEffectImage;
+    static heartImage = heartImage;
+    static buttonImage = buttonImage;
     static fontAtariImage = fontAtariImage;
     static fontAtariMetadata = fontAtariMetadata;
 }

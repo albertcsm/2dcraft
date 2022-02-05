@@ -1,5 +1,6 @@
 import 'phaser';
 import ScrollScene from './scene/scroll-scene'
+import GameoverScene from './scene/gameover-scene';
 import './style.css'
 
 const config: Phaser.Types.Core.GameConfig = {
@@ -19,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
       // debugShowStaticBody: true,
     },
   },
-  scene: ScrollScene
+  scene: [ScrollScene, GameoverScene]
 }
 
 new Phaser.Game(config);
