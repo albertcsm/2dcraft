@@ -9,6 +9,8 @@ const TNT_INDEX = 9
 const CHEST_INDEX = 28
 const MAX_LIVES = 3
 const INIT_LIVES = 3
+const WORLD_WIDTH = 3200
+const WORLD_HEIGHT = 600
 
 export default class ScrollScene extends Phaser.Scene {
 
@@ -59,6 +61,8 @@ export default class ScrollScene extends Phaser.Scene {
         this.terrainLayer = this.tilemap.createLayer('World1', tileset1, 0, 0).setScale(1).setCollisionByExclusion([-1, ...GRASS_INDICES]);
 
         this.player = this.physics.add.sprite(100, 300, 'player').setSize(90, 260).setScale(0.2);
+        this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+        this.player.setCollideWorldBounds(true);
     
         this.anims.create({
             key: 'left',
@@ -127,7 +131,7 @@ export default class ScrollScene extends Phaser.Scene {
 
         this.add.bitmapText(8, 8, 'atari', '2D Craft').setOrigin(0).setScale(0.4).setScrollFactor(0);
 
-        this.cameras.main.setBounds(0, 0, 3200, this.sys.game.canvas.height);
+        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         this.cameras.main.startFollow(this.player);
     }
     
@@ -185,10 +189,10 @@ export default class ScrollScene extends Phaser.Scene {
                 tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE/2);
             } else if (this.facing === -1) {
                 let pos = this.player.getLeftCenter()
-                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, pos.y - TILE_SIZE/2, 0, TILE_SIZE/2);
+                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE/4, 0, TILE_SIZE/2);
             } else if (this.facing === 1) {
                 let pos = this.player.getRightCenter()
-                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, pos.y - TILE_SIZE/2, 0, TILE_SIZE/2);
+                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE/4, 0, TILE_SIZE/2);
             }
 
             if (tile) {
