@@ -144,8 +144,11 @@ export default class ScrollScene extends Phaser.Scene {
             this.scene.pause();
             this.scene.run(SceneNames.WINNING);
         } else if (this.playerLives === 0) {
-            this.scene.pause();
-            this.scene.run(SceneNames.GAMEOVER);
+            // let animations run for a while
+            this.time.delayedCall(200, () => {
+                this.scene.pause();
+                this.scene.run(SceneNames.GAMEOVER);
+            })
         }
 
         for (let i = 0; i < this.playerLiveImages.length; i++) {
