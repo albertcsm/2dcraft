@@ -1,6 +1,8 @@
 # 2D Craft
 
-A 2D side-scrolling game that mimics gameplay of Minecraft. Implemented with Phaser 3.
+A 2D side-scrolling game that mimics gameplay of Minecraft. Implemented with [Phaser 3](https://phaser.io/phaser3).
+
+Check the [DEMO](https://albertcsm.github.io/2dcraft/).
 
 <img src="screenshot.png" width="400">
 
