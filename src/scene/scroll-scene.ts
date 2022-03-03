@@ -13,6 +13,9 @@ const MAX_LIVES = 3
 const INIT_LIVES = 3
 const WORLD_WIDTH = 3200
 const WORLD_HEIGHT = 600
+const TILE_TYPE_EMPTY = 1
+const TILE_TYPE_SOFT = 2
+const TILE_TYPE_HARD = 4
 
 export default class ScrollScene extends Phaser.Scene {
 
@@ -199,26 +202,24 @@ export default class ScrollScene extends Phaser.Scene {
         } 
         
         if (this.keyPut.isDown && !this.puttingTile) {
-            if (this.facing === -1) {
+            let tile;
+            if (this.keyDown.isDown) {
+                let pos = this.player.getBottomCenter()
+                tile = this.findTileToInteract(pos.x, pos.y, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, TILE_SIZE/2, 0);
+            } else if (this.keyUp.isDown) {
+                let pos = this.player.getTopCenter()
+                tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, TILE_SIZE, TILE_SIZE/2);
+            } else if (this.facing === -1) {
                 let pos = this.player.getLeftCenter()
-                pos.x -= TILE_SIZE/2
-                let x = Math.floor(pos.x / TILE_SIZE)
-                let y = Math.floor(pos.y / TILE_SIZE)
-                let tile = this.terrainLayer.getTileAt(x, y)
-                if (!tile || GRASS_INDICES.includes(tile.index)) {
-                    this.terrainLayer.putTileAt(STONE_INDEX, x, y)
-                }
+                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE*0, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, 0, TILE_SIZE/2);
             } else if (this.facing === 1) {
                 let pos = this.player.getRightCenter()
-                pos.x += TILE_SIZE/2
-                let x = Math.floor(pos.x / TILE_SIZE)
-                let y = Math.floor(pos.y / TILE_SIZE)
-                let tile = this.terrainLayer.getTileAt(x, y)
-                if (!tile || GRASS_INDICES.includes(tile.index)) {
-                    this.terrainLayer.putTileAt(STONE_INDEX, x, y)
-                }
+                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE*0, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, 0, TILE_SIZE/2);
             }
-            this.puttingTile = true
+            if (tile) {
+                this.terrainLayer.putTileAt(STONE_INDEX, tile.x, tile.y)
+                this.puttingTile = true
+            }
         } else if (this.keyPut.isUp) {
             this.puttingTile = false
         }
@@ -227,18 +228,17 @@ export default class ScrollScene extends Phaser.Scene {
             let tile;
             if (this.keyDown.isDown) {
                 let pos = this.player.getBottomCenter()
-                tile = this.findTileToInteract(pos.x, pos.y, TILE_SIZE/2, 0);
+                tile = this.findTileToInteract(pos.x, pos.y, TILE_TYPE_SOFT | TILE_TYPE_HARD, TILE_SIZE/2, 0);
             } else if (this.keyUp.isDown) {
                 let pos = this.player.getTopCenter()
-                tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_SIZE, TILE_SIZE/2);
+                tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_TYPE_SOFT | TILE_TYPE_HARD, TILE_SIZE, TILE_SIZE/2);
             } else if (this.facing === -1) {
                 let pos = this.player.getLeftCenter()
-                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE/4, 0, TILE_SIZE/2);
+                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE/2, TILE_TYPE_SOFT | TILE_TYPE_HARD, 0, TILE_SIZE/2);
             } else if (this.facing === 1) {
                 let pos = this.player.getRightCenter()
-                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE/4, 0, TILE_SIZE/2);
+                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE/2, TILE_TYPE_SOFT | TILE_TYPE_HARD, 0, TILE_SIZE/2);
             }
-
             if (tile) {
                 this.breakTile(tile.x, tile.y)
                 this.breakingTile = true;
@@ -293,12 +293,16 @@ export default class ScrollScene extends Phaser.Scene {
         }
     }
 
-    private findTileToInteract(worldX: number, worldY: number, toleranceX: number, toleranceY: number): Phaser.Tilemaps.Tile {
+    private findTileToInteract(worldX: number, worldY: number, tileType: number, toleranceX: number, toleranceY: number): Phaser.Tilemaps.Tile {
         let tiles: Phaser.Tilemaps.Tile[] = []
-        for (let i = worldX - toleranceX; i <= worldX + toleranceX + 0.1; i += TILE_SIZE) {
-            for (let j = worldY - toleranceY; j <= worldY + toleranceY + 0.1; j += TILE_SIZE) {
-                let tile = this.terrainLayer.getTileAtWorldXY(i, j)
-                if (tile) {
+        const x0 = Math.floor((worldX - toleranceX) / TILE_SIZE)
+        const y0 = Math.floor((worldY - toleranceY) / TILE_SIZE)
+        const x1 = Math.floor((worldX + toleranceX) / TILE_SIZE)
+        const y1 = Math.floor((worldY + toleranceY) / TILE_SIZE)
+        for (let i = x0; i <= x1; i++) {
+            for (let j = y0; j <= y1; j++) {
+                let tile = this.terrainLayer.getTileAt(i, j, true)
+                if (this.testTileForType(tile, tileType)) {
                     tiles.push(tile)
                 }
             }
@@ -308,12 +312,41 @@ export default class ScrollScene extends Phaser.Scene {
         return index != -1 ? tiles[index] : null
     }
 
+    private testTileForType(tile: Phaser.Tilemaps.Tile, tileType: number) {
+        if (tile == null || tile.index === -1) {
+            if (tileType & TILE_TYPE_EMPTY) {
+                if (this.testCollionWithImaginaryTile(tile)) {
+                    return false
+                }
+                return true
+            } else {
+                return false
+            }
+        } else if (GRASS_INDICES.includes(tile.index)) {
+            return tileType & TILE_TYPE_SOFT
+        } else {
+            return tileType & TILE_TYPE_HARD
+        }
+    }
+
+    private testCollionWithImaginaryTile(tile: Phaser.Tilemaps.Tile): boolean {
+        // this.physics.world.collideTiles with imaginary tile (index -1) doesn't work
+        // this.physics.overlapTiles is too strict
+        const bound = this.player.getBounds()
+        if (bound.bottom <= tile.y * TILE_SIZE || bound.top >= (tile.y + 1) * TILE_SIZE ||
+            bound.centerX <= tile.x * TILE_SIZE || bound.centerX >= (tile.x + 1) * TILE_SIZE) {
+            return false;
+        }
+        return true
+    }
+
     private breakTile(x: number, y: number) {
-        this.terrainLayer.removeTileAt(x, y)
+        // remove with replaceWithNull false, so that getTileAt() can still be used later
+        this.terrainLayer.removeTileAt(x, y, false)
 
         let upperTile = this.terrainLayer.getTileAt(x, y - 1)
         if (upperTile && GRASS_INDICES.includes(upperTile.index)) {
-            this.terrainLayer.removeTileAt(upperTile.x, upperTile.y)
+            this.terrainLayer.removeTileAt(upperTile.x, upperTile.y, false)
         }
         this.shouldSpreadLavaAfter = Math.min(Date.now() + 1000, this.shouldSpreadLavaAfter)
     }
