@@ -9,6 +9,10 @@ import explosionEffectImage from '../assets/effect/explosion.png';
 // @ts-ignore
 import heartImage from '../assets/overlay/heart.gif';
 // @ts-ignore
+import cubeImage from '../assets/overlay/cube.png';
+// @ts-ignore
+import pickaxeImage from '../assets/overlay/pickaxe.png';
+// @ts-ignore
 import buttonImage from '../assets/overlay/button.png';
 // @ts-ignore
 import trophyImage from '../assets/overlay/trophy.png';
@@ -23,6 +27,8 @@ export default class Textures {
     static alexSprite: string = alexSprite;
     static explosionEffectImage = explosionEffectImage;
     static heartImage = heartImage;
+    static cubeImage = cubeImage;
+    static pickaxeImage = pickaxeImage;
     static buttonImage = buttonImage;
     static trophyImage = trophyImage;
     static fontAtariImage = fontAtariImage;

@@ -1,4 +1,6 @@
 import 'phaser'
+import VirtualJoystick from 'phaser3-rex-plugins/plugins/virtualjoystick.js'
+import Button from 'phaser3-rex-plugins/plugins/button.js';
 import worldMapData from '../assets/terrain/world1.json';
 import Textures from './textures';'./textures'
 import { SceneNames } from './scene-names';
@@ -36,6 +38,10 @@ export default class ScrollScene extends Phaser.Scene {
     private keyJump: Phaser.Input.Keyboard.Key
     private keyPut: Phaser.Input.Keyboard.Key
     private keyBreak: Phaser.Input.Keyboard.Key
+    private joystick: VirtualJoystick
+    private buttonJump: boolean
+    private buttonPut: boolean
+    private buttonBreak: boolean
     private facing: number
     private puttingTile: boolean
     private breakingTile: boolean
@@ -52,6 +58,8 @@ export default class ScrollScene extends Phaser.Scene {
         this.load.image('terrainTexture', Textures.terrainTexture);
         this.load.image('explosionEffectImage', Textures.explosionEffectImage);
         this.load.image('heartImage', Textures.heartImage);
+        this.load.image('cubeImage', Textures.cubeImage);
+        this.load.image('pickaxeImage', Textures.pickaxeImage);
         this.load.bitmapFont('atari', Textures.fontAtariImage, Textures.fontAtariMetadata);
     }
     
@@ -139,6 +147,29 @@ export default class ScrollScene extends Phaser.Scene {
         this.keyPut = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.COMMA)
         this.keyBreak = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.PERIOD)
 
+        this.joystick = new VirtualJoystick(this, {
+            x: 100,
+            y: 520,
+            radius: 50,
+            base: this.add.circle(0, 0, 60, 0x888888, 0.50),
+            thumb: this.add.circle(0, 0, 30, 0xcccccc, 0.75),
+            dir: '4dir'
+        })
+
+        let jumpButtonCircle = this.add.circle(600, 550, 30, 0xcccccc, 0.75).setScrollFactor(0)
+        let buttonJump = new Button(jumpButtonCircle, {mode: 'press'})
+        buttonJump.on('click', () => this.buttonJump = true)
+
+        let putButtonCircle = this.add.circle(660, 510, 30, 0xcccccc, 0.75).setScrollFactor(0)
+        this.add.image(660, 510, 'cubeImage').setScale(0.1).setAlpha(0.50).setScrollFactor(0)
+        let buttonPut = new Button(putButtonCircle, {mode: 'press'})
+        buttonPut.on('click', () => this.buttonPut = true)
+
+        let breakButtonCircle = this.add.circle(730, 500, 30, 0xcccccc, 0.75).setScrollFactor(0)
+        this.add.image(730, 500, 'pickaxeImage').setScale(0.1).setAlpha(0.50).setScrollFactor(0)
+        let buttonBreak = new Button(breakButtonCircle, {mode: 'press'})
+        buttonBreak.on('click', () => this.buttonBreak = true)
+
         this.physics.add.collider(this.player, this.terrainLayer);
         this.terrainLayer.setTileIndexCallback(TNT_INDEX, this.touchTnt, this);
         this.terrainLayer.setTileIndexCallback(LAVA_INDEX, this.touchLava, this);
@@ -177,23 +208,34 @@ export default class ScrollScene extends Phaser.Scene {
             this.spreadLava();
         }
 
-        if (this.keyJump.isDown && this.player.body.blocked.down) {
+        const pressedUp = this.keyUp.isDown || this.joystick.up
+        const pressedDown = this.keyDown.isDown || this.joystick.down
+        const pressedLeft = this.keyLeft.isDown || this.joystick.left
+        const pressedRight = this.keyRight.isDown || this.joystick.right
+        const pressedJump = this.keyJump.isDown || this.buttonJump
+        const pressedPut = this.keyPut.isDown || this.buttonPut
+        const pressedBreak = this.keyBreak.isDown || this.buttonBreak
+        this.buttonJump = false
+        this.buttonPut = false
+        this.buttonBreak = false
+
+        if (pressedJump && this.player.body.blocked.down) {
             this.player.setVelocityY(-280);   
         }
 
-        if (this.keyLeft.isDown) {
+        if (pressedLeft) {
             this.facing = -1
             this.player.setVelocityX(-160);
             this.player.anims.play('left', true);
-        } else if (this.keyRight.isDown) {
+        } else if (pressedRight) {
             this.facing = +1
             this.player.setVelocityX(160);
             this.player.anims.play('right', true);
         } else {
             this.player.setVelocityX(0);
-            if (this.keyUp.isDown) {
+            if (pressedUp) {
                 this.player.anims.play(`${this.facing < 0 ? 'left' : 'right'}-up`, true);
-            } else if (this.keyDown.isDown) {
+            } else if (pressedDown) {
                 this.player.anims.play(`${this.facing < 0 ? 'left' : 'right'}-down`, true);
             } else if (this.player.body.blocked.down) {
                 this.player.anims.play(this.facing < 0 ? 'left' : 'right', true);
@@ -201,12 +243,12 @@ export default class ScrollScene extends Phaser.Scene {
             }
         } 
         
-        if (this.keyPut.isDown && !this.puttingTile) {
+        if (pressedPut && !this.puttingTile) {
             let tile;
-            if (this.keyDown.isDown) {
+            if (pressedDown) {
                 let pos = this.player.getBottomCenter()
                 tile = this.findTileToInteract(pos.x, pos.y, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, TILE_SIZE/2, 0);
-            } else if (this.keyUp.isDown) {
+            } else if (pressedUp) {
                 let pos = this.player.getTopCenter()
                 tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, TILE_SIZE, TILE_SIZE/2);
             } else if (this.facing === -1) {
@@ -220,16 +262,16 @@ export default class ScrollScene extends Phaser.Scene {
                 this.terrainLayer.putTileAt(STONE_INDEX, tile.x, tile.y)
                 this.puttingTile = true
             }
-        } else if (this.keyPut.isUp) {
+        } else if (!pressedPut) {
             this.puttingTile = false
         }
 
-        if (this.keyBreak.isDown && !this.breakingTile) {
+        if (pressedBreak && !this.breakingTile) {
             let tile;
-            if (this.keyDown.isDown) {
+            if (pressedDown) {
                 let pos = this.player.getBottomCenter()
                 tile = this.findTileToInteract(pos.x, pos.y, TILE_TYPE_SOFT | TILE_TYPE_HARD, TILE_SIZE/2, 0);
-            } else if (this.keyUp.isDown) {
+            } else if (pressedUp) {
                 let pos = this.player.getTopCenter()
                 tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_TYPE_SOFT | TILE_TYPE_HARD, TILE_SIZE, TILE_SIZE/2);
             } else if (this.facing === -1) {
@@ -243,7 +285,7 @@ export default class ScrollScene extends Phaser.Scene {
                 this.breakTile(tile.x, tile.y)
                 this.breakingTile = true;
             }
-        } else if (this.keyBreak.isUp) {
+        } else if (!pressedBreak) {
             this.breakingTile = false;
         }
     }
