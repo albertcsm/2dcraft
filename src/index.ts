@@ -21,6 +21,9 @@ const config: Phaser.Types.Core.GameConfig = {
       // debugShowStaticBody: true,
     },
   },
+  input :{
+		activePointers: 10,
+	},
   scene: [ScrollScene, GameoverScene, WinningScene]
 }
 

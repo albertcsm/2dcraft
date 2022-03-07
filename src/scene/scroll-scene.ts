@@ -1,6 +1,5 @@
 import 'phaser'
 import VirtualJoystick from 'phaser3-rex-plugins/plugins/virtualjoystick.js'
-import Button from 'phaser3-rex-plugins/plugins/button.js';
 import worldMapData from '../assets/terrain/world1.json';
 import Textures from './textures';'./textures'
 import { SceneNames } from './scene-names';
@@ -156,19 +155,35 @@ export default class ScrollScene extends Phaser.Scene {
             dir: '4dir'
         })
 
-        let jumpButtonCircle = this.add.circle(600, 550, 30, 0xcccccc, 0.75).setScrollFactor(0)
-        let buttonJump = new Button(jumpButtonCircle, {mode: 'press'})
-        buttonJump.on('click', () => this.buttonJump = true)
+        let jumpButtonCircle = this.add.circle(600, 550, 30, 0xcccccc, 0.75).setScrollFactor(0).setInteractive()
 
-        let putButtonCircle = this.add.circle(660, 510, 30, 0xcccccc, 0.75).setScrollFactor(0)
+        let putButtonCircle = this.add.circle(660, 510, 30, 0xcccccc, 0.75).setScrollFactor(0).setInteractive()
         this.add.image(660, 510, 'cubeImage').setScale(0.1).setAlpha(0.50).setScrollFactor(0)
-        let buttonPut = new Button(putButtonCircle, {mode: 'press'})
-        buttonPut.on('click', () => this.buttonPut = true)
 
-        let breakButtonCircle = this.add.circle(730, 500, 30, 0xcccccc, 0.75).setScrollFactor(0)
+        let breakButtonCircle = this.add.circle(730, 500, 30, 0xcccccc, 0.75).setScrollFactor(0).setInteractive()
         this.add.image(730, 500, 'pickaxeImage').setScale(0.1).setAlpha(0.50).setScrollFactor(0)
-        let buttonBreak = new Button(breakButtonCircle, {mode: 'press'})
-        buttonBreak.on('click', () => this.buttonBreak = true)
+
+        this.input.on('gameobjectdown', (pointer: any, gameObject: any, event: any) => {
+            console.log(pointer, gameObject, event)
+            if (gameObject == jumpButtonCircle) {
+                this.buttonJump = true
+            } else if (gameObject == putButtonCircle) {
+                this.buttonPut = true
+            } else if (gameObject == breakButtonCircle) {
+                this.buttonBreak = true
+            }
+        });
+    
+        this.input.on('gameobjectup', (pointer: any, gameObject: any, event: any) => {
+            console.log(pointer, gameObject, event)
+            if (gameObject == jumpButtonCircle) {
+                this.buttonJump = false
+            } else if (gameObject == putButtonCircle) {
+                this.buttonPut = false
+            } else if (gameObject == breakButtonCircle) {
+                this.buttonBreak = false
+            } 
+        });
 
         this.physics.add.collider(this.player, this.terrainLayer);
         this.terrainLayer.setTileIndexCallback(TNT_INDEX, this.touchTnt, this);
@@ -215,9 +230,6 @@ export default class ScrollScene extends Phaser.Scene {
         const pressedJump = this.keyJump.isDown || this.buttonJump
         const pressedPut = this.keyPut.isDown || this.buttonPut
         const pressedBreak = this.keyBreak.isDown || this.buttonBreak
-        this.buttonJump = false
-        this.buttonPut = false
-        this.buttonBreak = false
 
         if (pressedJump && this.player.body.blocked.down) {
             this.player.setVelocityY(-280);   
