@@ -23,7 +23,12 @@ export default class GameoverScene extends Phaser.Scene {
         let title = this.add.text(this.sys.canvas.width/2, 200, 'Game over!', { font: '32px Courier', color: '#ffffff'})
         title.setOrigin(0.5).setShadow(3, 3, 'rgba(0,0,0,0.8)', 1)
 
-        this.add.image(400, 300, 'buttonImage').setScale(0.3, 0.2)
+        const respawnButton = this.add.image(400, 300, 'buttonImage').setScale(0.3, 0.2).setInteractive()
+        this.input.on('gameobjectup', (pointer: any, gameObject: any, event: any) => {
+            if (gameObject == respawnButton) {
+                this.scene.start(SceneNames.SCROLL_GAME)
+            }
+        })
 
         let respawnText = this.add.text(this.sys.canvas.width/2, 300, 'Respawn', { font: '24px Courier', color: '#ffffff' })
         respawnText.setOrigin(0.5).setShadow(2, 2, 'rgba(0,0,0,0.8)', 1)

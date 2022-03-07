@@ -19,8 +19,13 @@ export default class WinningScene extends Phaser.Scene {
 
         graphics.fillStyle(0x000000, 0.5);
         graphics.fillRect(0, 100, 800, 400);
-        
-        this.add.image(400, 270, 'trophyImage').setScale(0.4)
+
+        const trophyImage = this.add.image(400, 270, 'trophyImage').setScale(0.4).setInteractive()
+        this.input.on('gameobjectup', (pointer: any, gameObject: any, event: any) => {
+            if (gameObject == trophyImage) {
+                this.scene.start(SceneNames.SCROLL_GAME)
+            }
+        })
 
         let title = this.add.text(this.sys.canvas.width/2, 440, 'You Win!', { font: '32px Courier', color: '#ffffff'})
         title.setOrigin(0.5).setShadow(3, 3, 'rgba(0,0,0,0.8)', 1)
