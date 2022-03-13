@@ -20,6 +20,7 @@ const TILE_TYPE_HARD = 4
 
 export default class ScrollScene extends Phaser.Scene {
 
+    private backgroundImage: Phaser.GameObjects.Image
     private tilemap: Phaser.Tilemaps.Tilemap
     private terrainLayer: Phaser.Tilemaps.TilemapLayer
     private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
@@ -38,6 +39,11 @@ export default class ScrollScene extends Phaser.Scene {
     private keyPut: Phaser.Input.Keyboard.Key
     private keyBreak: Phaser.Input.Keyboard.Key
     private joystick: VirtualJoystick
+    private jumpButtonCircle: Phaser.GameObjects.Arc
+    private putButtonCircle: Phaser.GameObjects.Arc
+    private breakButtonCircle: Phaser.GameObjects.Arc
+    private putButtonImage: Phaser.GameObjects.Image
+    private breakButtonImage: Phaser.GameObjects.Image
     private buttonJump: boolean
     private buttonPut: boolean
     private buttonBreak: boolean
@@ -73,8 +79,10 @@ export default class ScrollScene extends Phaser.Scene {
         this.puttingTile = false
         this.breakingTile = false
 
-        this.cameras.main.setBackgroundColor('#adc8ff')
-        this.add.image(0, 0, 'sky').setOrigin(0, 0).setScrollFactor(0.02, 0);
+        this.add.graphics().fillStyle(0xadc8ff).fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT).setScrollFactor(0)
+
+        // to be re-scaled in handleCanvasResize()
+        this.backgroundImage = this.add.image(0, 0, 'sky').setOrigin(0, 0)
     
         this.tilemap = this.make.tilemap({ key: 'worldMap' });
         const tileset1 = this.tilemap.addTilesetImage('terrain', 'terrainTexture');
@@ -133,7 +141,8 @@ export default class ScrollScene extends Phaser.Scene {
 
         this.playerLiveImages = []
         for (let i = MAX_LIVES; i > 0; i--) {
-            let image = this.add.image(this.sys.game.canvas.width + 10 - 30 * i, 20, 'heartImage').setScale(0.1).setScrollFactor(0);
+            // to be re-positioned in handleCanvasResize()
+            let image = this.add.image(0, 0, 'heartImage').setScale(0.1).setScrollFactor(0);
             this.playerLiveImages.push(image)
         }
 
@@ -146,41 +155,39 @@ export default class ScrollScene extends Phaser.Scene {
         this.keyPut = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.COMMA)
         this.keyBreak = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.PERIOD)
 
+        // to be re-positioned
         this.joystick = new VirtualJoystick(this, {
-            x: 100,
-            y: 520,
+            x: 0,
+            y: 0,
             radius: 50,
             base: this.add.circle(0, 0, 60, 0x888888, 0.50),
             thumb: this.add.circle(0, 0, 30, 0xcccccc, 0.75),
             dir: '4dir'
         })
-
-        let jumpButtonCircle = this.add.circle(600, 550, 30, 0xcccccc, 0.75).setScrollFactor(0).setInteractive()
-
-        let putButtonCircle = this.add.circle(660, 510, 30, 0xcccccc, 0.75).setScrollFactor(0).setInteractive()
-        this.add.image(660, 510, 'cubeImage').setScale(0.1).setAlpha(0.50).setScrollFactor(0)
-
-        let breakButtonCircle = this.add.circle(730, 500, 30, 0xcccccc, 0.75).setScrollFactor(0).setInteractive()
-        this.add.image(730, 500, 'pickaxeImage').setScale(0.1).setAlpha(0.50).setScrollFactor(0)
+        this.jumpButtonCircle = this.add.circle(0, 0, 30, 0xcccccc, 0.75).setScrollFactor(0).setInteractive()
+        this.putButtonCircle = this.add.circle(0, 0, 30, 0xcccccc, 0.75).setScrollFactor(0).setInteractive()
+        this.putButtonImage = this.add.image(0, 0, 'cubeImage').setScale(0.1).setAlpha(0.50).setScrollFactor(0)
+        this.breakButtonCircle = this.add.circle(0, 0, 30, 0xcccccc, 0.75).setScrollFactor(0).setInteractive()
+        this.breakButtonImage = this.add.image(0, 0, 'pickaxeImage').setScale(0.1).setAlpha(0.50).setScrollFactor(0)
 
         this.input.on('gameobjectdown', (pointer: any, gameObject: any, event: any) => {
             console.log(pointer, gameObject, event)
-            if (gameObject == jumpButtonCircle) {
+            if (gameObject == this.jumpButtonCircle) {
                 this.buttonJump = true
-            } else if (gameObject == putButtonCircle) {
+            } else if (gameObject == this.putButtonCircle) {
                 this.buttonPut = true
-            } else if (gameObject == breakButtonCircle) {
+            } else if (gameObject == this.breakButtonCircle) {
                 this.buttonBreak = true
             }
         });
     
         this.input.on('gameobjectup', (pointer: any, gameObject: any, event: any) => {
             console.log(pointer, gameObject, event)
-            if (gameObject == jumpButtonCircle) {
+            if (gameObject == this.jumpButtonCircle) {
                 this.buttonJump = false
-            } else if (gameObject == putButtonCircle) {
+            } else if (gameObject == this.putButtonCircle) {
                 this.buttonPut = false
-            } else if (gameObject == breakButtonCircle) {
+            } else if (gameObject == this.breakButtonCircle) {
                 this.buttonBreak = false
             } 
         });
@@ -194,8 +201,11 @@ export default class ScrollScene extends Phaser.Scene {
 
         this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
         this.cameras.main.startFollow(this.player);
+
+        this.scale.on('resize', this.handleCanvasResize, this);
+        this.handleCanvasResize()
     }
-    
+
     update() {
         if (this.gotChest) {
             this.scene.pause();
@@ -300,6 +310,25 @@ export default class ScrollScene extends Phaser.Scene {
         } else if (!pressedBreak) {
             this.breakingTile = false;
         }
+    }
+
+    private handleCanvasResize() {
+        const canvasWidth = this.sys.game.canvas.width
+        const canvasHeight = this.sys.game.canvas.height
+
+        const backgroundScale = canvasWidth / this.backgroundImage.width
+        this.backgroundImage.setScale(backgroundScale * 1.1, 1).setScrollFactor(canvasWidth * 0.1 / WORLD_WIDTH, 0);
+
+        for (let i = 0; i < this.playerLiveImages.length; i++) {
+            this.playerLiveImages[i].setPosition(canvasWidth - 20 - 30 * i, 20)
+        }
+
+        this.joystick.setPosition(100, canvasHeight - 80)
+        this.jumpButtonCircle.setPosition(canvasWidth - 200, canvasHeight - 50)
+        this.putButtonCircle.setPosition(canvasWidth - 140, canvasHeight - 90)
+        this.putButtonImage.setPosition(canvasWidth - 140, canvasHeight - 90)
+        this.breakButtonCircle.setPosition(canvasWidth - 70, canvasHeight - 100)
+        this.breakButtonImage.setPosition(canvasWidth - 70, canvasHeight - 100)
     }
 
     private spreadLava() {
