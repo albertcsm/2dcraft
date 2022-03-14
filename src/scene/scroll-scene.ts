@@ -12,8 +12,6 @@ const CHEST_INDEX = 28
 const STONE_INDEX = 2
 const MAX_LIVES = 3
 const INIT_LIVES = 3
-const WORLD_WIDTH = 3200
-const WORLD_HEIGHT = 600
 const TILE_TYPE_EMPTY = 1
 const TILE_TYPE_SOFT = 2
 const TILE_TYPE_HARD = 4
@@ -22,6 +20,9 @@ export default class ScrollScene extends Phaser.Scene {
 
     private backgroundImage: Phaser.GameObjects.Image
     private tilemap: Phaser.Tilemaps.Tilemap
+    private tileset: Phaser.Tilemaps.Tileset
+    private worldWidth: number
+    private worldHeight: number
     private terrainLayer: Phaser.Tilemaps.TilemapLayer
     private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     private playerLives: number
@@ -79,17 +80,20 @@ export default class ScrollScene extends Phaser.Scene {
         this.puttingTile = false
         this.breakingTile = false
 
-        this.add.graphics().fillStyle(0xadc8ff).fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT).setScrollFactor(0)
+        this.tilemap = this.make.tilemap({ key: 'worldMap' });
+        this.tileset = this.tilemap.addTilesetImage('terrain', 'terrainTexture');
+        this.worldWidth = this.tilemap.width * this.tileset.tileWidth
+        this.worldHeight = this.tilemap.height * this.tileset.tileHeight
+
+        this.add.graphics().fillStyle(0xadc8ff).fillRect(0, 0, this.worldWidth, this.worldHeight).setScrollFactor(0)
 
         // to be re-scaled in handleCanvasResize()
         this.backgroundImage = this.add.image(0, 0, 'sky').setOrigin(0, 0)
     
-        this.tilemap = this.make.tilemap({ key: 'worldMap' });
-        const tileset1 = this.tilemap.addTilesetImage('terrain', 'terrainTexture');
-        this.terrainLayer = this.tilemap.createLayer('World1', tileset1, 0, 0).setScale(1).setCollisionByExclusion([-1, ...GRASS_INDICES, LAVA_INDEX]);
+        this.terrainLayer = this.tilemap.createLayer('World1', this.tileset, 0, 0).setScale(1).setCollisionByExclusion([-1, ...GRASS_INDICES, LAVA_INDEX]);
 
         this.player = this.physics.add.sprite(100, 300, 'player').setSize(90, 260).setScale(0.2);
-        this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+        this.physics.world.setBounds(0, 0, this.worldWidth, this.worldHeight)
         this.player.setCollideWorldBounds(true);
     
         this.anims.create({
@@ -159,7 +163,7 @@ export default class ScrollScene extends Phaser.Scene {
         this.joystick = new VirtualJoystick(this, {
             x: 0,
             y: 0,
-            radius: 50,
+            radius: 60,
             base: this.add.circle(0, 0, 60, 0x888888, 0.50),
             thumb: this.add.circle(0, 0, 30, 0xcccccc, 0.75),
             dir: '4dir'
@@ -199,7 +203,7 @@ export default class ScrollScene extends Phaser.Scene {
 
         this.add.bitmapText(8, 8, 'atari', '2D Craft').setOrigin(0).setScale(0.4).setScrollFactor(0);
 
-        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
         this.cameras.main.startFollow(this.player);
 
         this.scale.on('resize', this.handleCanvasResize, this);
@@ -317,18 +321,18 @@ export default class ScrollScene extends Phaser.Scene {
         const canvasHeight = this.sys.game.canvas.height
 
         const backgroundScale = canvasWidth / this.backgroundImage.width
-        this.backgroundImage.setScale(backgroundScale * 1.1, 1).setScrollFactor(canvasWidth * 0.1 / WORLD_WIDTH, 0);
+        this.backgroundImage.setScale(backgroundScale * 1.1, 1).setScrollFactor(canvasWidth * 0.1 / this.worldWidth, 0);
 
         for (let i = 0; i < this.playerLiveImages.length; i++) {
             this.playerLiveImages[i].setPosition(canvasWidth - 20 - 30 * i, 20)
         }
 
-        this.joystick.setPosition(100, canvasHeight - 80)
-        this.jumpButtonCircle.setPosition(canvasWidth - 200, canvasHeight - 50)
-        this.putButtonCircle.setPosition(canvasWidth - 140, canvasHeight - 90)
-        this.putButtonImage.setPosition(canvasWidth - 140, canvasHeight - 90)
-        this.breakButtonCircle.setPosition(canvasWidth - 70, canvasHeight - 100)
-        this.breakButtonImage.setPosition(canvasWidth - 70, canvasHeight - 100)
+        this.joystick.setPosition(90, canvasHeight - 90)    // 30 margin + 60 base radius
+        this.jumpButtonCircle.setPosition(canvasWidth - 190, canvasHeight - 60)
+        this.putButtonCircle.setPosition(canvasWidth - 130, canvasHeight - 100)
+        this.putButtonImage.setPosition(canvasWidth - 130, canvasHeight - 100)
+        this.breakButtonCircle.setPosition(canvasWidth - 60, canvasHeight - 110)    // 30 margin + 30 radius
+        this.breakButtonImage.setPosition(canvasWidth - 60, canvasHeight - 110)
     }
 
     private spreadLava() {
