@@ -3,6 +3,7 @@ import VirtualJoystick from 'phaser3-rex-plugins/plugins/virtualjoystick.js'
 import worldMapData from '../assets/terrain/world1.json';
 import Textures from './textures';'./textures'
 import { SceneNames } from './scene-names';
+import Player from '../character/player';
 
 const TILE_SIZE = 32
 const GRASS_INDICES = [90]
@@ -10,8 +11,6 @@ const TNT_INDEX = 9
 const LAVA_INDEX = 238
 const CHEST_INDEX = 28
 const STONE_INDEX = 2
-const MAX_LIVES = 3
-const INIT_LIVES = 3
 const TILE_TYPE_EMPTY = 1
 const TILE_TYPE_SOFT = 2
 const TILE_TYPE_HARD = 4
@@ -24,12 +23,8 @@ export default class ScrollScene extends Phaser.Scene {
     private worldWidth: number
     private worldHeight: number
     private terrainLayer: Phaser.Tilemaps.TilemapLayer
-    private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    private playerLives: number
+    private player: Player
     private playerLiveImages: Phaser.GameObjects.Image[]
-    private playerDisabledUntil: number
-    private playerInvincibleUntil: number
-    private playerPassiveVelocity: Phaser.Math.Vector2
     private shouldSpreadLavaAfter: number
     private gotChest: boolean
     private keyUp: Phaser.Input.Keyboard.Key
@@ -48,18 +43,18 @@ export default class ScrollScene extends Phaser.Scene {
     private buttonJump: boolean
     private buttonPut: boolean
     private buttonBreak: boolean
-    private facing: number
     private puttingTile: boolean
     private breakingTile: boolean
     private explosionEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
 
     constructor() {
         super(SceneNames.SCROLL_GAME)
+        this.player = new Player(this)
     }
 
     preload() {
         this.load.image('sky', Textures.skyImage)
-        this.load.spritesheet('player', Textures.alexSprite, { frameWidth: 200, frameHeight: 288 });
+        this.player.preload()
         this.load.tilemapTiledJSON('worldMap', worldMapData);
         this.load.image('terrainTexture', Textures.terrainTexture);
         this.load.image('explosionEffectImage', Textures.explosionEffectImage);
@@ -70,13 +65,8 @@ export default class ScrollScene extends Phaser.Scene {
     }
     
     create() {
-        this.playerLives = INIT_LIVES
-        this.playerDisabledUntil = 0
-        this.playerInvincibleUntil = 0
-        this.playerPassiveVelocity = new Phaser.Math.Vector2(0,0)
         this.shouldSpreadLavaAfter = 0
         this.gotChest = false
-        this.facing = +1
         this.puttingTile = false
         this.breakingTile = false
 
@@ -92,45 +82,9 @@ export default class ScrollScene extends Phaser.Scene {
     
         this.terrainLayer = this.tilemap.createLayer('World1', this.tileset, 0, 0).setScale(1).setCollisionByExclusion([-1, ...GRASS_INDICES, LAVA_INDEX]);
 
-        this.player = this.physics.add.sprite(100, 300, 'player').setSize(90, 260).setScale(0.2);
-        this.physics.world.setBounds(0, 0, this.worldWidth, this.worldHeight)
-        this.player.setCollideWorldBounds(true);
-    
-        this.anims.create({
-            key: 'left',
-            frames: this.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
-            frameRate: 10,
-            repeat: -1
-        });
-    
-        this.anims.create({
-            key: 'right',
-            frames: this.anims.generateFrameNumbers('player', { start: 4, end: 7 }),
-            frameRate: 10,
-            repeat: -1
-        });
-    
-        this.anims.create({
-            key: 'left-up',
-            frames: [ { key: 'player', frame: 8 } ]
-        });
+        this.player.init()
 
-        this.anims.create({
-            key: 'left-down',
-            frames: [ { key: 'player', frame: 9 } ]
-        });
-
-        this.anims.create({
-            key: 'right-up',
-            frames: [ { key: 'player', frame: 10 } ]
-        });
-
-        this.anims.create({
-            key: 'right-down',
-            frames: [ { key: 'player', frame: 11 } ]
-        });
-    
-        this.player.anims.play('right', true);
+        this.physics.world.setBounds(0, 0, this.worldWidth, this.worldHeight)    
 
         this.explosionEmitter = this.add.particles('explosionEffectImage').createEmitter({
             speed: { min: 50, max: 150 },
@@ -144,7 +98,7 @@ export default class ScrollScene extends Phaser.Scene {
         });;
 
         this.playerLiveImages = []
-        for (let i = MAX_LIVES; i > 0; i--) {
+        for (let i = Player.MAX_LIVES; i > 0; i--) {
             // to be re-positioned in handleCanvasResize()
             let image = this.add.image(0, 0, 'heartImage').setScale(0.1).setScrollFactor(0);
             this.playerLiveImages.push(image)
@@ -196,7 +150,7 @@ export default class ScrollScene extends Phaser.Scene {
             } 
         });
 
-        this.physics.add.collider(this.player, this.terrainLayer);
+        this.physics.add.collider(this.player.getSprite(), this.terrainLayer);
         this.terrainLayer.setTileIndexCallback(TNT_INDEX, this.touchTnt, this);
         this.terrainLayer.setTileIndexCallback(LAVA_INDEX, this.touchLava, this);
         this.terrainLayer.setTileIndexCallback(CHEST_INDEX, this.touchChest, this);
@@ -204,7 +158,7 @@ export default class ScrollScene extends Phaser.Scene {
         this.add.bitmapText(8, 8, 'atari', '2D Craft').setOrigin(0).setScale(0.4).setScrollFactor(0);
 
         this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
-        this.cameras.main.startFollow(this.player);
+        this.cameras.main.startFollow(this.player.getSprite());
 
         this.scale.on('resize', this.handleCanvasResize, this);
         this.handleCanvasResize()
@@ -214,7 +168,7 @@ export default class ScrollScene extends Phaser.Scene {
         if (this.gotChest) {
             this.scene.pause();
             this.scene.run(SceneNames.WINNING);
-        } else if (this.playerLives === 0) {
+        } else if (this.player.getLives() === 0) {
             // let animations run for a while
             this.time.delayedCall(200, () => {
                 this.scene.pause();
@@ -223,14 +177,7 @@ export default class ScrollScene extends Phaser.Scene {
         }
 
         for (let i = 0; i < this.playerLiveImages.length; i++) {
-            this.playerLiveImages[i].setAlpha(i >= this.playerLives ? 0.2 : 1)
-        }
-        if (Date.now() < this.playerDisabledUntil) {
-            if (this.playerPassiveVelocity.x !== 0 || this.playerPassiveVelocity.y !== 0) {
-                this.player.setVelocity(this.playerPassiveVelocity.x, this.playerPassiveVelocity.y)
-                this.playerPassiveVelocity = new Phaser.Math.Vector2(0, 0)
-            }
-            return;
+            this.playerLiveImages[i].setAlpha(i >= this.player.getLives() ? 0.2 : 1)
         }
 
         if (Date.now() > this.shouldSpreadLavaAfter) {
@@ -245,44 +192,42 @@ export default class ScrollScene extends Phaser.Scene {
         const pressedPut = this.keyPut.isDown || this.buttonPut
         const pressedBreak = this.keyBreak.isDown || this.buttonBreak
 
-        if (pressedJump && this.player.body.blocked.down) {
-            this.player.setVelocityY(-280);   
+        if (pressedUp) {
+            this.player.lookUp()
+        } else if (pressedDown) {
+            this.player.lookDown()
+        } else {
+            this.player.lookForward()
         }
 
         if (pressedLeft) {
-            this.facing = -1
-            this.player.setVelocityX(-160);
-            this.player.anims.play('left', true);
+            this.player.moveLeft()
         } else if (pressedRight) {
-            this.facing = +1
-            this.player.setVelocityX(160);
-            this.player.anims.play('right', true);
+            this.player.moveRight()
         } else {
-            this.player.setVelocityX(0);
-            if (pressedUp) {
-                this.player.anims.play(`${this.facing < 0 ? 'left' : 'right'}-up`, true);
-            } else if (pressedDown) {
-                this.player.anims.play(`${this.facing < 0 ? 'left' : 'right'}-down`, true);
-            } else if (this.player.body.blocked.down) {
-                this.player.anims.play(this.facing < 0 ? 'left' : 'right', true);
-                this.player.anims.stop();
-            }
+            this.player.stopMoving()
         } 
         
+        if (pressedJump) {
+            this.player.jump()
+        }
+
+        this.player.update()
+
         if (pressedPut && !this.puttingTile) {
             let tile;
-            if (pressedDown) {
-                let pos = this.player.getBottomCenter()
+            if (this.player.getLookingUp() < 0) {
+                let pos = this.player.getSprite().getBottomCenter()
                 tile = this.findTileToInteract(pos.x, pos.y, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, TILE_SIZE/2, 0);
-            } else if (pressedUp) {
-                let pos = this.player.getTopCenter()
+            } else if (this.player.getLookingUp() > 0) {
+                let pos = this.player.getSprite().getTopCenter()
                 tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, TILE_SIZE, TILE_SIZE/2);
-            } else if (this.facing === -1) {
-                let pos = this.player.getLeftCenter()
-                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE*0, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, 0, TILE_SIZE/2);
-            } else if (this.facing === 1) {
-                let pos = this.player.getRightCenter()
-                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE*0, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, 0, TILE_SIZE/2);
+            } else if (this.player.getFacing() < 0) {
+                let pos = this.player.getSprite().getLeftCenter()
+                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, this.player.getSprite().getBounds().centerY - TILE_SIZE*0, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, 0, TILE_SIZE/2);
+            } else if (this.player.getFacing() > 0) {
+                let pos = this.player.getSprite().getRightCenter()
+                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, this.player.getSprite().getBounds().centerY - TILE_SIZE*0, TILE_TYPE_EMPTY | TILE_TYPE_SOFT, 0, TILE_SIZE/2);
             }
             if (tile) {
                 this.terrainLayer.putTileAt(STONE_INDEX, tile.x, tile.y)
@@ -294,18 +239,18 @@ export default class ScrollScene extends Phaser.Scene {
 
         if (pressedBreak && !this.breakingTile) {
             let tile;
-            if (pressedDown) {
-                let pos = this.player.getBottomCenter()
+            if (this.player.getLookingUp() < 0) {
+                let pos = this.player.getSprite().getBottomCenter()
                 tile = this.findTileToInteract(pos.x, pos.y, TILE_TYPE_SOFT | TILE_TYPE_HARD, TILE_SIZE/2, 0);
-            } else if (pressedUp) {
-                let pos = this.player.getTopCenter()
+            } else if (this.player.getLookingUp() > 0) {
+                let pos = this.player.getSprite().getTopCenter()
                 tile = this.findTileToInteract(pos.x, pos.y - TILE_SIZE/2, TILE_TYPE_SOFT | TILE_TYPE_HARD, TILE_SIZE, TILE_SIZE/2);
-            } else if (this.facing === -1) {
-                let pos = this.player.getLeftCenter()
-                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE/2, TILE_TYPE_SOFT | TILE_TYPE_HARD, 0, TILE_SIZE/2);
-            } else if (this.facing === 1) {
-                let pos = this.player.getRightCenter()
-                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, this.player.getBounds().centerY - TILE_SIZE/2, TILE_TYPE_SOFT | TILE_TYPE_HARD, 0, TILE_SIZE/2);
+            } else if (this.player.getFacing() < 0) {
+                let pos = this.player.getSprite().getLeftCenter()
+                tile = this.findTileToInteract(pos.x - TILE_SIZE/2, this.player.getSprite().getBounds().centerY - TILE_SIZE/2, TILE_TYPE_SOFT | TILE_TYPE_HARD, 0, TILE_SIZE/2);
+            } else if (this.player.getFacing() > 0) {
+                let pos = this.player.getSprite().getRightCenter()
+                tile = this.findTileToInteract(pos.x + TILE_SIZE/2, this.player.getSprite().getBounds().centerY - TILE_SIZE/2, TILE_TYPE_SOFT | TILE_TYPE_HARD, 0, TILE_SIZE/2);
             }
             if (tile) {
                 this.breakTile(tile.x, tile.y)
@@ -419,7 +364,7 @@ export default class ScrollScene extends Phaser.Scene {
     private testCollionWithImaginaryTile(tile: Phaser.Tilemaps.Tile): boolean {
         // this.physics.world.collideTiles with imaginary tile (index -1) doesn't work
         // this.physics.overlapTiles is too strict
-        const bound = this.player.getBounds()
+        const bound = this.player.getSprite().getBounds()
         if (bound.bottom <= tile.y * TILE_SIZE || bound.top >= (tile.y + 1) * TILE_SIZE ||
             bound.centerX <= tile.x * TILE_SIZE || bound.centerX >= (tile.x + 1) * TILE_SIZE) {
             return false;
@@ -454,36 +399,19 @@ export default class ScrollScene extends Phaser.Scene {
         Math.random() > 0.2 || this.breakTile(tile.x + 2, tile.y)
         Math.random() > 0.2 || this.breakTile(tile.x, tile.y - 2)
         Math.random() > 0.2 || this.breakTile(tile.x, tile.y + 2)
-        let pos = this.player.getCenter()
+        let pos = this.player.getSprite().getCenter()
         let vx = Math.sign(pos.x - tile.getCenterX()) * 100;
         let vy = Math.sign(pos.y - tile.getCenterY()) * 100;
-        this.playerPassiveVelocity = new Phaser.Math.Vector2(vx, vy)
-        this.playerDisabledUntil = Date.now() + 400;
-        this.hurtPlayer()
+        this.player.passivePush(vx, vy)
+        this.player.hurt()
     }
 
     private touchLava(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {
-        this.hurtPlayer()
+        this.player.hurt()
     }
 
     private touchChest(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {
         this.gotChest = true;
     }
 
-    private hurtPlayer() {
-        if (Date.now() > this.playerInvincibleUntil) {
-            this.playerInvincibleUntil = Date.now() + 1000;
-            if (this.playerLives > 0) {
-                this.playerLives--
-            }
-
-            this.tweens.add({
-                targets: this.player,
-                alpha: 0,
-                duration: 100,
-                yoyo: true,
-                repeat: 5,
-            })
-        }
-    }
 }
