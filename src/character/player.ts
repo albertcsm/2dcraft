@@ -24,7 +24,7 @@ export default class Player {
         this.scene.load.spritesheet('player', Textures.alexSprite, { frameWidth: 200, frameHeight: 288 });
     }
 
-    init() {
+    init(initX: number, initY: number) {
         this.lives = Player.INIT_LIVES
         this.facing = +1
         this.lookingUp = 0
@@ -33,7 +33,7 @@ export default class Player {
         this.playerInvincibleUntil = 0
         this.playerPassiveVelocity = new Phaser.Math.Vector2(0,0)
         
-        this.sprite = this.scene.physics.add.sprite(100, 300, 'player').setSize(90, 260).setScale(0.2);
+        this.sprite = this.scene.physics.add.sprite(initX, initY, 'player').setSize(90, 260).setScale(0.2);
         this.sprite.setCollideWorldBounds(true);
 
         this.scene.anims.create({
