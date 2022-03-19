@@ -65,6 +65,9 @@ export default class Zombie implements Character {
                 this.sprite.setVelocityX(dx < 0 ? -50 : 50)
                 this.sprite.flipX = dx < 0
                 this.sprite.anims.play('zombieWalk', true)
+                if (this.sprite.body.onWall() && this.sprite.body.onFloor()) {
+                    this.sprite.setVelocityY(-250);
+                }
             } else {
                 this.sprite.anims.stop()
                 this.sprite.setVelocityX(0)
