@@ -1,7 +1,8 @@
 import 'phaser'
 import Textures from '../scene/textures';
+import Character from './character';
 
-export default class Player {
+export default class Player implements Character {
 
     static readonly MAX_LIVES = 3
     static readonly INIT_LIVES = 3

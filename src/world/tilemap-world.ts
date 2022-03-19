@@ -1,8 +1,8 @@
 import Textures from '../scene/textures';
 import worldMapData from '../assets/terrain/world1.json';
-import Player from '../character/player';
 import { TileType } from './tile-type';
 import TileFilter from './tile-filter';
+import Character from '../character/character';
 
 export default class TilemapWorld {
     private static readonly GRASS_INDICES = [TileType.GRASS_1]
@@ -15,7 +15,7 @@ export default class TilemapWorld {
     private terrainLayer: Phaser.Tilemaps.TilemapLayer
     private explosionEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
     private shouldSpreadLavaAfter: number
-    private characters: Player[] = []
+    private characters: Character[] = []
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene
@@ -50,7 +50,7 @@ export default class TilemapWorld {
         this.shouldSpreadLavaAfter = 0        
     }
 
-    addCharacter(character: Player) {
+    addCharacter(character: Character) {
         this.scene.physics.add.collider(character.getSprite(), this.terrainLayer);
         this.characters.push(character)
     }

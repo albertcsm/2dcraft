@@ -5,12 +5,14 @@ import { SceneNames } from './scene-names';
 import Player from '../character/player';
 import TilemapWorld from '../world/tilemap-world'
 import { TileType } from '../world/tile-type';
+import Zombie from '../character/zombie';
 
 export default class ScrollScene extends Phaser.Scene {
 
     private backgroundImage: Phaser.GameObjects.Image
     private world: TilemapWorld
     private player: Player
+    private zombie: Zombie
     private playerLiveImages: Phaser.GameObjects.Image[]
     private gotChest: boolean
     private keyUp: Phaser.Input.Keyboard.Key
@@ -36,12 +38,14 @@ export default class ScrollScene extends Phaser.Scene {
         super(SceneNames.SCROLL_GAME)
         this.world = new TilemapWorld(this)
         this.player = new Player(this)
+        this.zombie = new Zombie(this)
     }
 
     preload() {
         this.load.image('sky', Textures.skyImage)
         this.world.preload()
         this.player.preload()
+        this.zombie.preload()
         this.load.image('explosionEffectImage', Textures.explosionEffectImage);
         this.load.image('heartImage', Textures.heartImage);
         this.load.image('cubeImage', Textures.cubeImage);
@@ -61,7 +65,11 @@ export default class ScrollScene extends Phaser.Scene {
 
         this.world.init()
         this.player.init(100, 300)
+        this.zombie.init(900, 200)
+        this.zombie.chaseAfter(this.player, 300)
         this.world.addCharacter(this.player)
+        this.world.addCharacter(this.zombie)
+        this.physics.add.collider(this.player.getSprite(), this.zombie.getSprite())
         this.world.addObjectTouchedCallback(TileType.CHEST, this.touchChest.bind(this));
 
         this.physics.world.setBounds(0, 0, this.world.getWidth(), this.world.getHeight())
@@ -176,6 +184,7 @@ export default class ScrollScene extends Phaser.Scene {
         }
 
         this.player.update()
+        this.zombie.update()
         
         const tileSize = this.world.getTileSize()
 
