@@ -4,8 +4,8 @@ import Character from './character';
 
 export default class Player implements Character {
 
-    static readonly MAX_LIVES = 3
-    static readonly INIT_LIVES = 3
+    static readonly MAX_LIVES = 5
+    static readonly INIT_LIVES = 5
 
     private scene: Phaser.Scene
     private sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody

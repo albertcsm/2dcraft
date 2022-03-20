@@ -18,8 +18,8 @@ export default class Zombie implements Character {
         this.scene = scene
     }
 
-    preload() {
-        this.scene.load.spritesheet('zombie', Textures.zombieSprite, { frameWidth: 218, frameHeight: 288 });
+    static preload(scene: Phaser.Scene) {
+        scene.load.spritesheet('zombie', Textures.zombieSprite, { frameWidth: 218, frameHeight: 288 });
     }
     
     init(initX: number, initY: number) {

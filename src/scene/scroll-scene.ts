@@ -12,7 +12,7 @@ export default class ScrollScene extends Phaser.Scene {
     private backgroundImage: Phaser.GameObjects.Image
     private world: TilemapWorld
     private player: Player
-    private zombie: Zombie
+    private zombies: Zombie[]
     private playerLiveImages: Phaser.GameObjects.Image[]
     private gotChest: boolean
     private keyUp: Phaser.Input.Keyboard.Key
@@ -38,14 +38,13 @@ export default class ScrollScene extends Phaser.Scene {
         super(SceneNames.SCROLL_GAME)
         this.world = new TilemapWorld(this)
         this.player = new Player(this)
-        this.zombie = new Zombie(this)
     }
 
     preload() {
         this.load.image('sky', Textures.skyImage)
         this.world.preload()
         this.player.preload()
-        this.zombie.preload()
+        Zombie.preload(this)
         this.load.image('explosionEffectImage', Textures.explosionEffectImage);
         this.load.image('heartImage', Textures.heartImage);
         this.load.image('cubeImage', Textures.cubeImage);
@@ -57,6 +56,7 @@ export default class ScrollScene extends Phaser.Scene {
         this.gotChest = false
         this.puttingTile = false
         this.breakingTile = false
+        this.zombies = []
 
         const backgroundExtend = this.add.graphics().setScrollFactor(0)
 
@@ -65,12 +65,9 @@ export default class ScrollScene extends Phaser.Scene {
 
         this.world.init()
         this.player.init(100, 300)
-        this.zombie.init(900, 200)
-        this.zombie.chaseAfter(this.player, 300)
         this.world.addCharacter(this.player)
-        this.world.addCharacter(this.zombie)
-        this.physics.add.collider(this.player.getSprite(), this.zombie.getSprite())
         this.world.addObjectTouchedCallback(TileType.CHEST, this.touchChest.bind(this));
+        this.spawnZombies()
 
         this.physics.world.setBounds(0, 0, this.world.getWidth(), this.world.getHeight())
         backgroundExtend.fillStyle(0xadc8ff).fillRect(0, 0, this.world.getWidth(), this.world.getHeight())
@@ -184,7 +181,7 @@ export default class ScrollScene extends Phaser.Scene {
         }
 
         this.player.update()
-        this.zombie.update()
+        this.zombies.forEach(z => z.update())
         
         const tileSize = this.world.getTileSize()
 
@@ -222,6 +219,21 @@ export default class ScrollScene extends Phaser.Scene {
             }
         } else if (!pressedBreak) {
             this.breakingTile = false;
+        }
+    }
+
+    private spawnZombies() {
+        for (const tile of this.world.findObjects(TileType.RED_CLOTH)) {
+            this.world.breakObject(tile.getCenterX(), tile.getCenterY(), 0, 0)
+            
+            const zombie = new Zombie(this)
+            zombie.init(tile.getCenterX(), tile.getCenterY())
+            this.world.addCharacter(zombie)
+            this.physics.add.collider(this.player.getSprite(), zombie.getSprite())
+            this.zombies.forEach(z => this.physics.add.collider(zombie.getSprite(), z.getSprite()))            
+            zombie.chaseAfter(this.player, 300)            
+            
+            this.zombies.push(zombie)
         }
     }
 

@@ -77,6 +77,15 @@ export default class TilemapWorld {
         this.terrainLayer.setTileIndexCallback(tileType, callback, this);
     }
 
+    findObjects(tileType: TileType): Phaser.Tilemaps.Tile[] {
+        const tiles = []
+        let tile
+        for (let i = 0; tile = this.terrainLayer.findByIndex(tileType, i); i++) {
+            tiles.push(tile)
+        }
+        return tiles
+    }
+
     putObject(tileType: TileType, worldX: number, worldY: number, toleranceX: number, toleranceY: number): boolean {
         const tileFilter = {
             hardTile: false,
