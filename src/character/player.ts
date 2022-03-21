@@ -22,7 +22,7 @@ export default class Player implements Character {
     }
 
     preload() {
-        this.scene.load.spritesheet('player', Textures.alexSprite, { frameWidth: 200, frameHeight: 288 });
+        this.scene.load.spritesheet('player', Textures.alexSprite, { frameWidth: 200, frameHeight: 300 });
     }
 
     init(initX: number, initY: number) {
