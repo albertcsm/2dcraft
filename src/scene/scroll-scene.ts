@@ -6,9 +6,13 @@ import Player from '../character/player';
 import TilemapWorld from '../world/tilemap-world'
 import { TileType } from '../world/tile-type';
 import Zombie from '../character/zombie';
+import SettingsService from '../settings/settings-service';
+import Settings from '../settings/settings';
 
 export default class ScrollScene extends Phaser.Scene {
 
+    private settingsService: SettingsService
+    private settings: Settings
     private backgroundImage: Phaser.GameObjects.Image
     private world: TilemapWorld
     private player: Player
@@ -28,6 +32,7 @@ export default class ScrollScene extends Phaser.Scene {
     private breakButtonCircle: Phaser.GameObjects.Arc
     private putButtonImage: Phaser.GameObjects.Image
     private breakButtonImage: Phaser.GameObjects.Image
+    private pauseButtonImage: Phaser.GameObjects.Image
     private buttonJump: boolean
     private buttonPut: boolean
     private buttonBreak: boolean
@@ -36,6 +41,7 @@ export default class ScrollScene extends Phaser.Scene {
 
     constructor() {
         super(SceneNames.SCROLL_GAME)
+        this.settingsService = new SettingsService()
         this.world = new TilemapWorld(this)
         this.player = new Player(this)
     }
@@ -49,10 +55,12 @@ export default class ScrollScene extends Phaser.Scene {
         this.load.image('heartImage', Textures.heartImage);
         this.load.image('cubeImage', Textures.cubeImage);
         this.load.image('pickaxeImage', Textures.pickaxeImage);
+        this.load.image('pauseImage', Textures.pauseImage)
         this.load.bitmapFont('atari', Textures.fontAtariImage, Textures.fontAtariMetadata);
     }
     
     create() {
+        this.settings = this.settingsService.getSettings()
         this.gotChest = false
         this.puttingTile = false
         this.breakingTile = false
@@ -104,13 +112,15 @@ export default class ScrollScene extends Phaser.Scene {
         this.breakButtonImage = this.add.image(0, 0, 'pickaxeImage').setScale(0.1).setAlpha(0.50).setScrollFactor(0)
 
         this.input.on('gameobjectdown', (pointer: any, gameObject: any, event: any) => {
-            console.log(pointer, gameObject, event)
             if (gameObject == this.jumpButtonCircle) {
                 this.buttonJump = true
             } else if (gameObject == this.putButtonCircle) {
                 this.buttonPut = true
             } else if (gameObject == this.breakButtonCircle) {
                 this.buttonBreak = true
+            } else if (gameObject == this.pauseButtonImage) {
+                this.scene.pause()
+                this.scene.run(SceneNames.SETTINGS)
             }
         });
     
@@ -126,12 +136,20 @@ export default class ScrollScene extends Phaser.Scene {
         });
 
         this.add.bitmapText(8, 8, 'atari', '2D Craft').setOrigin(0).setScale(0.4).setScrollFactor(0);
+        this.pauseButtonImage = this.add.image(0, 0, 'pauseImage').setOrigin(0.5, 0).setScale(0.125).setScrollFactor(0).setInteractive()
 
         this.cameras.main.setBounds(0, 0, this.world.getWidth(), this.world.getHeight());
         this.cameras.main.startFollow(this.player.getSprite());
 
         this.scale.on('resize', this.handleCanvasResize, this);
         this.handleCanvasResize()
+
+        this.events.on('resume', () => {
+            // reload settings in case modified
+            this.settings = this.settingsService.getSettings()
+            this.applySettings()
+        })
+        this.applySettings()
     }
 
     update() {
@@ -222,6 +240,18 @@ export default class ScrollScene extends Phaser.Scene {
         }
     }
 
+    private applySettings() {
+        if (this.settings.peacefulMode) {
+            this.player.setInvincible(true)
+            this.playerLiveImages.forEach(i => i.setVisible(false))
+            this.zombies.forEach(z => z.randomWalk())
+        } else {
+            this.player.setInvincible(false)
+            this.playerLiveImages.forEach(i => i.setVisible(true))
+            this.zombies.forEach(z => z.chaseAfter(this.player, 300))
+        }
+    }
+
     private spawnZombies() {
         for (const tile of this.world.findObjects(TileType.RED_CLOTH)) {
             this.world.breakObject(tile.getCenterX(), tile.getCenterY(), 0, 0)
@@ -231,7 +261,6 @@ export default class ScrollScene extends Phaser.Scene {
             this.world.addCharacter(zombie)
             this.physics.add.collider(this.player.getSprite(), zombie.getSprite())
             this.zombies.forEach(z => this.physics.add.collider(zombie.getSprite(), z.getSprite()))            
-            zombie.chaseAfter(this.player, 300)            
             
             this.zombies.push(zombie)
         }
@@ -254,6 +283,8 @@ export default class ScrollScene extends Phaser.Scene {
         this.putButtonImage.setPosition(canvasWidth - 130, canvasHeight - 100)
         this.breakButtonCircle.setPosition(canvasWidth - 60, canvasHeight - 110)    // 30 margin + 30 radius
         this.breakButtonImage.setPosition(canvasWidth - 60, canvasHeight - 110)
+
+        this.pauseButtonImage.setPosition(canvasWidth / 2, 0)
     }
 
     private touchChest(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {

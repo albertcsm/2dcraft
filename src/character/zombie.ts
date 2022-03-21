@@ -72,6 +72,9 @@ export default class Zombie implements Character {
                 this.sprite.anims.stop()
                 this.sprite.setVelocityX(0)
             }
+        } else {
+            this.sprite.anims.stop()
+            this.sprite.setVelocityX(0)
         }
     }
 
@@ -106,6 +109,11 @@ export default class Zombie implements Character {
     chaseAfter(player: Player, range: number) {
         this.chasingAfter = player
         this.chasingRange = range
+    }
+
+    randomWalk() {
+        this.chasingAfter = null
+        this.chasingRange = Infinity
     }
 
 }

@@ -17,6 +17,8 @@ import pickaxeImage from '../assets/overlay/pickaxe.png';
 // @ts-ignore
 import buttonImage from '../assets/overlay/button.png';
 // @ts-ignore
+import pauseImage from '../assets/overlay/pause.png';
+// @ts-ignore
 import trophyImage from '../assets/overlay/trophy.png';
 // @ts-ignore
 import fontAtariImage from '../assets/font/atari.png';
@@ -33,6 +35,7 @@ export default class Textures {
     static cubeImage = cubeImage;
     static pickaxeImage = pickaxeImage;
     static buttonImage = buttonImage;
+    static pauseImage = pauseImage;
     static trophyImage = trophyImage;
     static fontAtariImage = fontAtariImage;
     static fontAtariMetadata = fontAtariMetadata;

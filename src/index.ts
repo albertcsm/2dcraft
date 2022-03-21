@@ -3,6 +3,7 @@ import ScrollScene from './scene/scroll-scene'
 import GameoverScene from './scene/gameover-scene';
 import WinningScene from './scene/winning-scene';
 import './style.css'
+import SettingsScene from './scene/settings-scene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -24,7 +25,7 @@ const config: Phaser.Types.Core.GameConfig = {
   input :{
 		activePointers: 10,
 	},
-  scene: [ScrollScene, GameoverScene, WinningScene]
+  scene: [ScrollScene, SettingsScene, GameoverScene, WinningScene]
 }
 
 new Phaser.Game(config);

@@ -16,6 +16,7 @@ export default class Player implements Character {
     private playerDisabledUntil: number
     private playerInvincibleUntil: number
     private playerPassiveVelocity: Phaser.Math.Vector2
+    private alwaysInvincible: boolean
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene
@@ -33,6 +34,7 @@ export default class Player implements Character {
         this.playerDisabledUntil = 0
         this.playerInvincibleUntil = 0
         this.playerPassiveVelocity = new Phaser.Math.Vector2(0,0)
+        this.alwaysInvincible = false
         
         this.sprite = this.scene.physics.add.sprite(initX, initY, 'player').setSize(90, 260).setScale(0.2);
         this.sprite.setCollideWorldBounds(true);
@@ -153,7 +155,8 @@ export default class Player implements Character {
     hurt() {
         if (Date.now() > this.playerInvincibleUntil) {
             this.playerInvincibleUntil = Date.now() + 1000;
-            if (this.lives > 0) {
+
+            if (!this.alwaysInvincible && this.lives > 0) {
                 this.lives--
             }
 
@@ -165,6 +168,10 @@ export default class Player implements Character {
                 repeat: 5,
             })
         }
+    }
+
+    setInvincible(invincible: boolean) {
+        this.alwaysInvincible = invincible
     }
 
 }
