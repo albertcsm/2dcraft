@@ -74,7 +74,18 @@ export default class Zombie implements Character {
             }
         } else {
             this.sprite.anims.stop()
-            this.sprite.setVelocityX(0)
+
+            // add tiny motion when being pushed to trigger collision detection with wall
+            if (this.sprite.body.touching.left) {
+                this.sprite.setVelocityX(0.001)
+            } else if (this.sprite.body.touching.right) {
+                this.sprite.setVelocityX(-0.001)
+            } else {
+                this.sprite.setVelocityX(0)
+            }
+
+            // avoid being pushed into wall
+            this.sprite.setPushable(!this.sprite.body.onWall())
         }
     }
 
