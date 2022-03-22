@@ -46,10 +46,13 @@ export default class Zombie implements Character {
             return
         }
 
+        let stationary = true
+
         if (Date.now() < this.disabledUntil) {
             if (this.passiveVelocity.x !== 0 || this.passiveVelocity.y !== 0) {
                 this.sprite.setVelocity(this.passiveVelocity.x, this.passiveVelocity.y)
                 this.passiveVelocity = new Phaser.Math.Vector2(0, 0)
+                stationary = false
             }
             return;
         } else if (this.chasingAfter) {
@@ -68,11 +71,14 @@ export default class Zombie implements Character {
                 if (this.sprite.body.onWall() && this.sprite.body.onFloor()) {
                     this.sprite.setVelocityY(-250);
                 }
+                stationary = false
             } else {
                 this.sprite.anims.stop()
                 this.sprite.setVelocityX(0)
             }
-        } else {
+        }
+
+        if (stationary) {
             this.sprite.anims.stop()
 
             // add tiny motion when being pushed to trigger collision detection with wall
