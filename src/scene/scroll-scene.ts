@@ -62,6 +62,9 @@ export default class ScrollScene extends Phaser.Scene {
     create() {
         this.settings = this.settingsService.getSettings()
         this.gotChest = false
+        this.buttonJump = false
+        this.buttonPut = false
+        this.buttonBreak = false
         this.puttingTile = false
         this.breakingTile = false
         this.zombies = []
@@ -124,8 +127,7 @@ export default class ScrollScene extends Phaser.Scene {
             }
         });
     
-        this.input.on('gameobjectup', (pointer: any, gameObject: any, event: any) => {
-            console.log(pointer, gameObject, event)
+        const gameobjectupHandler = (pointer: any, gameObject: any, event: any) => {
             if (gameObject == this.jumpButtonCircle) {
                 this.buttonJump = false
             } else if (gameObject == this.putButtonCircle) {
@@ -133,7 +135,9 @@ export default class ScrollScene extends Phaser.Scene {
             } else if (gameObject == this.breakButtonCircle) {
                 this.buttonBreak = false
             } 
-        });
+        }
+        this.input.on('gameobjectup', gameobjectupHandler)
+        this.input.on('gameobjectout', gameobjectupHandler)
 
         this.add.bitmapText(8, 8, 'atari', '2D Craft').setOrigin(0).setScale(0.4).setScrollFactor(0);
         this.pauseButtonImage = this.add.image(0, 0, 'pauseImage').setOrigin(0.5, 0).setScale(0.125).setScrollFactor(0).setInteractive()
