@@ -17,6 +17,7 @@ export default class Player implements Character {
     private playerInvincibleUntil: number
     private playerPassiveVelocity: Phaser.Math.Vector2
     private alwaysInvincible: boolean
+    private invincibleTween: Phaser.Tweens.Tween
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene
@@ -74,6 +75,15 @@ export default class Player implements Character {
         });
     
         this.sprite.anims.play('right', true);
+
+        this.invincibleTween = this.scene.tweens.add({
+            targets: this.sprite,
+            alpha: 0,
+            duration: 100,
+            yoyo: true,
+            repeat: 5,
+            paused: true
+        })
     }
 
     update() {
@@ -160,13 +170,8 @@ export default class Player implements Character {
                 this.lives--
             }
 
-            this.scene.tweens.add({
-                targets: this.sprite,
-                alpha: 0,
-                duration: 100,
-                yoyo: true,
-                repeat: 5,
-            })
+            this.invincibleTween.resume()
+            this.invincibleTween.restart()
         }
     }
 
