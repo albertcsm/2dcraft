@@ -248,7 +248,14 @@ export default class TilemapWorld {
 
     private touchLava(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {
         const character = this.characters.find(c => c.getSprite() == spirit)
-        character?.hurt()
+        if (character) {
+            const body = character.getSprite().body
+            // correct for small error added by phaser in body position due to gravity
+            const deltaY = character.getSprite().body.deltaY()
+            if (tile.intersects(body.left, body.top - deltaY, body.right, body.bottom - deltaY)) {
+                character.hurt()
+            }
+        }
     }
 
 }
