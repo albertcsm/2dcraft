@@ -13,6 +13,7 @@ export default class Zombie implements Character {
     private invincibleUntil: number
     private chasingAfter?: Player
     private chasingRange: number = Infinity
+    private invincibleTween: Phaser.Tweens.Tween
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene
@@ -23,7 +24,7 @@ export default class Zombie implements Character {
     }
     
     init(initX: number, initY: number) {
-        this.lives = 3
+        this.lives = 2
         this.passiveVelocity = null
         this.disabledUntil = 0
         this.invincibleUntil = 0
@@ -38,6 +39,15 @@ export default class Zombie implements Character {
             frames: this.scene.anims.generateFrameNumbers('zombie', { start: 0, end: 1 }),
             frameRate: 5,
             repeat: -1
+        })
+
+        this.invincibleTween = this.scene.tweens.add({
+            targets: this.sprite,
+            alpha: 0,
+            duration: 100,
+            yoyo: true,
+            repeat: 0,
+            paused: true
         })
     }
 
@@ -105,18 +115,17 @@ export default class Zombie implements Character {
     }
 
     hurt() {
+        if (this.lives === 0) {
+            return
+        }
+
         if (Date.now() > this.invincibleUntil) {
             this.invincibleUntil = Date.now() + 1000;
-            if (this.lives > 0) {
-                this.lives--
-                
-                this.scene.tweens.add({
-                    targets: this.sprite,
-                    alpha: 0,
-                    duration: 100,
-                    yoyo: true,
-                    repeat: 0,
-                })
+            this.lives--
+
+            if (this.lives > 0) {                
+                this.invincibleTween.resume()
+                this.invincibleTween.restart()
             } else {
                 this.sprite.destroy()
             }
