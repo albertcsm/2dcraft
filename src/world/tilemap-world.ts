@@ -250,10 +250,11 @@ export default class TilemapWorld {
         const character = this.characters.find(c => c.getSprite() == spirit)
         if (character) {
             const body = character.getSprite().body
-            // correct for small error added by phaser in body position due to gravity
-            const deltaY = character.getSprite().body.deltaY()
-            if (tile.intersects(body.left, body.top - deltaY, body.right, body.bottom - deltaY)) {
-                character.hurt()
+            if (body) { // may be falsy if sprite destroyed
+                // correct for small error added by phaser in body position due to gravity
+                if (tile.intersects(body.left, body.top - body.deltaY(), body.right, body.bottom - body.deltaY())) {
+                    character.hurt()
+                }
             }
         }
     }
