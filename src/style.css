@@ -5,3 +5,58 @@ body {
     user-select:none;
     -webkit-user-select:none;
 }
+
+.mc-modal {
+    width: 100vw;
+    height: 100vh;
+    border: 0px;
+    margin: 0px;
+    padding: 0px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.mc-menu {
+    text-align: center;
+}
+
+.mc-menu > * {
+    margin: 30px 0;
+}
+
+.mc-label {
+    color: #DDD;
+    text-shadow: 2px 2px #000a;
+    font-size: 16pt;
+    font-family: monospace;
+}
+
+.mc-header {
+    font-size: 22pt;
+}
+
+.mc-button {
+    width: 300px;
+    height: 50px;
+    cursor: pointer;
+    overflow: hidden;
+    background-color: grey;
+    image-rendering: pixelated;
+    border: 2px solid #000;
+}
+
+.mc-button:active {
+    background-color: rgb(90, 90, 146);
+}
+
+.mc-button .mc-label {
+    width: 100%;
+    height: 100%;
+    padding-bottom: 0.3em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset -4px -8px #0006, inset 4px 4px #fff7;
+}

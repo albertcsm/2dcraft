@@ -45,6 +45,10 @@ module.exports = (env, options) => {
           test: /\.(png|svg|jpg|jpeg|gif|json|xml)$/i,
           type: 'asset/resource',
         },
+        {
+          test: /\.html$/i,
+          loader: "html-loader",
+        },
       ],
     },
     resolve: {
