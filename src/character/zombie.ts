@@ -1,9 +1,13 @@
 import 'phaser'
 import Textures from "../scene/textures";
+import TilemapWorld from '../world/tilemap-world';
 import Character from './character';
 import Player from './player';
+import WanderBeehavior from '../behavior/wander-behavior';
 
 export default class Zombie implements Character {
+
+    private static readonly wanderDistance = 100
 
     private scene: Phaser.Scene
     private sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
@@ -13,6 +17,7 @@ export default class Zombie implements Character {
     private invincibleUntil: number
     private chasingAfter?: Player
     private chasingRange: number = Infinity
+    private wanderBehavior: WanderBeehavior
     private invincibleTween: Phaser.Tweens.Tween
 
     constructor(scene: Phaser.Scene) {
@@ -23,7 +28,7 @@ export default class Zombie implements Character {
         scene.load.spritesheet('zombie', Textures.zombieSprite, { frameWidth: 220, frameHeight: 300 });
     }
     
-    init(initX: number, initY: number) {
+    init(world: TilemapWorld, initX: number, initY: number) {
         this.lives = 2
         this.passiveVelocity = null
         this.disabledUntil = 0
@@ -33,6 +38,9 @@ export default class Zombie implements Character {
 
         this.sprite = this.scene.physics.add.sprite(initX, initY, 'zombie').setSize(90, 260).setScale(0.2);
         this.sprite.setCollideWorldBounds(true);
+
+        this.wanderBehavior = new WanderBeehavior(this, world)
+        this.wanderBehavior.wanderAround(initX, initY, 25, Zombie.wanderDistance)
 
         this.scene.anims.create({
             key: 'zombieWalk',
@@ -56,56 +64,64 @@ export default class Zombie implements Character {
             return
         }
 
-        let stationary = true
-
         if (Date.now() < this.disabledUntil) {
             if (this.passiveVelocity.x !== 0 || this.passiveVelocity.y !== 0) {
                 this.sprite.setVelocity(this.passiveVelocity.x, this.passiveVelocity.y)
                 this.passiveVelocity = new Phaser.Math.Vector2(0, 0)
-                stationary = false
             }
             return;
-        } else if (this.chasingAfter) {
+        }
+        
+        let vx = 0
+        let jump = false
+        if (this.chasingAfter) {
             const dx = this.chasingAfter.getSprite().x - this.sprite.x
             const dy = this.chasingAfter.getSprite().y - this.sprite.y
             if (Math.abs(dx) < this.sprite.displayWidth * 3/4) {
-                this.sprite.anims.stop()
-                this.sprite.setVelocityX(0)
                 if (Math.abs(dy) < this.sprite.displayHeight * 2/3) {
                     this.chasingAfter.hurt()
                 }
             } else if (Math.abs(dx) < this.chasingRange) {
-                this.sprite.setVelocityX(dx < 0 ? -50 : 50)
-                this.sprite.flipX = dx < 0
-                this.sprite.anims.play('zombieWalk', true)
+                vx = dx < 0 ? -50 : 50
                 if (this.sprite.body.onWall() && this.sprite.body.onFloor()) {
-                    this.sprite.setVelocityY(-250);
+                    jump = true
                 }
-                stationary = false
             } else {
-                this.sprite.anims.stop()
-                this.sprite.setVelocityX(0)
+                [vx, jump] = this.wanderBehavior.getMotion()
             }
+        } else {
+            [vx, jump] = this.wanderBehavior.getMotion()
         }
 
-        if (stationary) {
+        if (vx !== 0) {
+            this.sprite.setVelocityX(vx);
+            this.sprite.flipX = vx < 0
+            this.sprite.anims.play('zombieWalk', true)
+        } else {
+            this.sprite.setVelocityX(0)
             this.sprite.anims.stop()
+        }
+        if (jump) {
+            this.sprite.setVelocityY(-250);
+        }
 
-            // add tiny motion when being pushed to trigger collision detection with wall
-            if (this.sprite.body.touching.left) {
-                this.sprite.setVelocityX(0.001)
-            } else if (this.sprite.body.touching.right) {
-                this.sprite.setVelocityX(-0.001)
-            } else {
-                this.sprite.setVelocityX(0)
-            }
-
+        // add tiny motion when being pushed to trigger collision detection with wall
+        if (this.sprite.body.touching.left) {
+            this.sprite.anims.stop()
+            this.sprite.setVelocityX(0.001)
             // avoid being pushed into wall
             this.sprite.setPushable(!this.sprite.body.onWall())
+        } else if (this.sprite.body.touching.right) {
+            this.sprite.anims.stop()
+            this.sprite.setVelocityX(-0.001)
+            // avoid being pushed into wall
+            this.sprite.setPushable(!this.sprite.body.onWall())
+        } else {
+            this.sprite.setPushable(true)
         }
     }
 
-    getSprite(): Phaser.Physics.Arcade.Sprite {
+    getSprite(): Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
         return this.sprite
     }
 

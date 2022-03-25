@@ -114,6 +114,70 @@ export default class TilemapWorld {
         return false
     }
     
+    getAccessibleRange(worldX: number, worldY: number, maxDistance: number): [number, number] {
+        let x = Math.floor(worldX / this.tileset.tileWidth)
+        let y = Math.floor(worldY / this.tileset.tileHeight)
+        
+        const hardTileFilter = {
+            hardTile: true,
+            softTile: false,
+            emptyTile: false
+        }
+        
+        // find ground
+        while (y < this.tilemap.height - 1 && !this.testTilePosForType(x, y, hardTileFilter)) {
+            y++
+        }
+
+        // find lateral range
+        const maxDistanceInTile = 1 + Math.floor(maxDistance / this.tileset.tileWidth) 
+        const left = this.findAccessibleEnd(x, y, false, maxDistanceInTile)
+        const right = this.findAccessibleEnd(x, y, true, maxDistanceInTile)
+        const leftWorldX = Math.max((left + 0.5) * this.tileset.tileWidth, worldX - maxDistance)
+        const rightWorldX = Math.min((right + 0.5) * this.tileset.tileWidth, worldX + maxDistance)
+        return [leftWorldX , rightWorldX]
+    }
+
+    private findAccessibleEnd(startingX: number, startingY: number, rightSide: boolean, maxDistance: number) {
+        const hardTile = {
+            hardTile: true,
+            softTile: false,
+            emptyTile: false
+        }
+        const spaceTile = {
+            hardTile: false,
+            softTile: true,
+            emptyTile: true
+        }
+        let x = startingX
+        let y = startingY
+        while (x > 0 && x < this.tilemap.width - 1 && x > startingX - maxDistance && x < startingX + maxDistance) {
+            const newX = rightSide ? x + 1 : x - 1
+            if (this.testTilePosForType(newX, y, hardTile) &&
+                this.testTilePosForType(newX, y - 1, spaceTile) &&
+                this.testTilePosForType(newX, y - 2, spaceTile)) {
+                // same level
+            } else if (y > 2 &&
+                this.testTilePosForType(newX, y - 1, hardTile) &&
+                this.testTilePosForType(newX, y - 2, spaceTile) &&
+                this.testTilePosForType(newX, y - 3, spaceTile)) {
+                // up-stair
+                y -= 1
+            } else if (y < this.tilemap.height - 1 &&
+                this.testTilePosForType(newX, y + 1, hardTile) &&
+                this.testTilePosForType(newX, y, spaceTile) &&
+                this.testTilePosForType(newX, y - 1, spaceTile)) {
+                // down-stair
+                y += 1
+            } else {
+                // dead-end
+                break
+            }
+            x = newX
+        }
+        return x
+    }
+
     private findTileToInteract(worldX: number, worldY: number, tileFilter: TileFilter, toleranceX: number, toleranceY: number): Phaser.Tilemaps.Tile {
         let tiles: Phaser.Tilemaps.Tile[] = []
         const x0 = Math.floor((worldX - toleranceX) / this.tileset.tileWidth)
@@ -148,6 +212,11 @@ export default class TilemapWorld {
         } else {
             return tileFilter.hardTile
         }
+    }
+
+    private testTilePosForType(x: number, y: number, tileFilter: TileFilter) {
+        let tile = this.terrainLayer.getTileAt(x, y, true)
+        return this.testTileForType(tile, tileFilter)
     }
 
     private testCollionWithImaginaryTile(tile: Phaser.Tilemaps.Tile): boolean {

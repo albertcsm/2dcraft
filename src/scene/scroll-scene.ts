@@ -261,7 +261,7 @@ export default class ScrollScene extends Phaser.Scene {
             this.world.breakObject(tile.getCenterX(), tile.getCenterY(), 0, 0)
             
             const zombie = new Zombie(this)
-            zombie.init(tile.getCenterX(), tile.getCenterY())
+            zombie.init(this.world, tile.getCenterX(), tile.getCenterY())
             this.world.addCharacter(zombie)
             this.physics.add.collider(this.player.getSprite(), zombie.getSprite())
             this.zombies.forEach(z => this.physics.add.collider(zombie.getSprite(), z.getSprite()))            

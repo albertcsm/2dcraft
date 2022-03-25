@@ -113,7 +113,7 @@ export default class Player implements Character {
         return this.lives
     }
 
-    getSprite(): Phaser.Physics.Arcade.Sprite {
+    getSprite(): Phaser.Types.Physics.Arcade.SpriteWithDynamicBody {
         return this.sprite
     }
 

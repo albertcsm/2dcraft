@@ -1,5 +1,5 @@
 export default interface Character {
-    getSprite(): Phaser.Physics.Arcade.Sprite
+    getSprite(): Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     passivePush(vx: number, vy: number): void
     hurt(): void
 }
