@@ -40,10 +40,17 @@ export default class Zombie implements Character {
         this.sprite.setCollideWorldBounds(true);
 
         this.wanderBehavior = new WanderBeehavior(this, world)
-        this.wanderBehavior.wanderAround(initX, initY, 25, Zombie.wanderDistance)
+        this.wanderBehavior.wanderAround(initX, initY, 20, Zombie.wanderDistance)
 
         this.scene.anims.create({
             key: 'zombieWalk',
+            frames: this.scene.anims.generateFrameNumbers('zombie', { start: 0, end: 1 }),
+            frameRate: 2,
+            repeat: -1
+        })
+
+        this.scene.anims.create({
+            key: 'zombieChase',
             frames: this.scene.anims.generateFrameNumbers('zombie', { start: 0, end: 1 }),
             frameRate: 5,
             repeat: -1
@@ -96,7 +103,7 @@ export default class Zombie implements Character {
         if (vx !== 0) {
             this.sprite.setVelocityX(vx);
             this.sprite.flipX = vx < 0
-            this.sprite.anims.play('zombieWalk', true)
+            this.sprite.anims.play(Math.abs(vx) > 25 ? 'zombieChase' : 'zombieWalk', true)
         } else {
             this.sprite.setVelocityX(0)
             this.sprite.anims.stop()
