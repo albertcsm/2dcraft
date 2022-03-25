@@ -131,6 +131,7 @@ export default class ScrollScene extends Phaser.Scene {
             } else if (gameObject == this.breakButtonCircle) {
                 this.buttonBreak = true
             } else if (gameObject == this.pauseButtonImage) {
+                this.stepSound.stop()
                 this.scene.pause()
                 this.scene.run(SceneNames.SETTINGS)
             }
@@ -166,19 +167,23 @@ export default class ScrollScene extends Phaser.Scene {
     }
 
     update() {
+        for (let i = 0; i < this.playerLiveImages.length; i++) {
+            this.playerLiveImages[i].setAlpha(i >= this.player.getLives() ? 0.2 : 1)
+        }
+
         if (this.gotChest) {
+            this.stepSound.stop()
             this.scene.pause();
             this.scene.run(SceneNames.WINNING);
+            return
         } else if (this.player.getLives() === 0) {
             // let animations run for a while
             this.time.delayedCall(200, () => {
+                this.stepSound.stop()
                 this.scene.pause();
                 this.scene.run(SceneNames.GAMEOVER);
             })
-        }
-
-        for (let i = 0; i < this.playerLiveImages.length; i++) {
-            this.playerLiveImages[i].setAlpha(i >= this.player.getLives() ? 0.2 : 1)
+            return
         }
 
         this.world.update()
