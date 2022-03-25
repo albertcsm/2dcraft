@@ -114,7 +114,7 @@ export default class TilemapWorld {
         return false
     }
     
-    getAccessibleRange(worldX: number, worldY: number, maxDistance: number): [number, number] {
+    getAccessibleRange(worldX: number, worldY: number, rangeLeft: number, rangeRight: number): [number, number] {
         let x = Math.floor(worldX / this.tileset.tileWidth)
         let y = Math.floor(worldY / this.tileset.tileHeight)
         
@@ -124,17 +124,16 @@ export default class TilemapWorld {
             emptyTile: false
         }
         
-        // find ground
-        while (y < this.tilemap.height - 1 && !this.testTilePosForType(x, y, hardTileFilter)) {
+        // find support or ground
+        while (y < this.tilemap.height && !this.testTilePosForType(x, y, hardTileFilter)) {
             y++
         }
 
         // find lateral range
-        const maxDistanceInTile = 1 + Math.floor(maxDistance / this.tileset.tileWidth) 
-        const left = this.findAccessibleEnd(x, y, false, maxDistanceInTile)
-        const right = this.findAccessibleEnd(x, y, true, maxDistanceInTile)
-        const leftWorldX = Math.max((left + 0.5) * this.tileset.tileWidth, worldX - maxDistance)
-        const rightWorldX = Math.min((right + 0.5) * this.tileset.tileWidth, worldX + maxDistance)
+        const left = this.findAccessibleEnd(x, y, false, 1 + Math.floor(rangeLeft / this.tileset.tileWidth))
+        const right = this.findAccessibleEnd(x, y, true, 1 + Math.floor(rangeRight / this.tileset.tileWidth))
+        const leftWorldX = Math.max((left + 0.5) * this.tileset.tileWidth, worldX - rangeLeft)
+        const rightWorldX = Math.min((right + 0.5) * this.tileset.tileWidth, worldX + rangeRight)
         return [leftWorldX , rightWorldX]
     }
 
@@ -153,7 +152,7 @@ export default class TilemapWorld {
         let y = startingY
         while (x > 0 && x < this.tilemap.width - 1 && x > startingX - maxDistance && x < startingX + maxDistance) {
             const newX = rightSide ? x + 1 : x - 1
-            if (this.testTilePosForType(newX, y, hardTile) &&
+            if ((y === this.tilemap.height || this.testTilePosForType(newX, y, hardTile)) &&
                 this.testTilePosForType(newX, y - 1, spaceTile) &&
                 this.testTilePosForType(newX, y - 2, spaceTile)) {
                 // same level
