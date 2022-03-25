@@ -1,6 +1,6 @@
 import 'phaser'
 import VirtualJoystick from 'phaser3-rex-plugins/plugins/virtualjoystick.js'
-import Textures from './textures';'./textures'
+import Resources from './resources'
 import { SceneNames } from './scene-names';
 import Player from '../character/player';
 import TilemapWorld from '../world/tilemap-world'
@@ -47,16 +47,16 @@ export default class ScrollScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('sky', Textures.skyImage)
+        this.load.image('sky', Resources.skyImage)
         this.world.preload()
         this.player.preload()
         Zombie.preload(this)
-        this.load.image('explosionEffectImage', Textures.explosionEffectImage);
-        this.load.image('heartImage', Textures.heartImage);
-        this.load.image('cubeImage', Textures.cubeImage);
-        this.load.image('pickaxeImage', Textures.pickaxeImage);
-        this.load.image('pauseImage', Textures.pauseImage)
-        this.load.bitmapFont('atari', Textures.fontAtariImage, Textures.fontAtariMetadata);
+        this.load.image('explosionEffectImage', Resources.explosionEffectImage);
+        this.load.image('heartImage', Resources.heartImage);
+        this.load.image('cubeImage', Resources.cubeImage);
+        this.load.image('pickaxeImage', Resources.pickaxeImage);
+        this.load.image('pauseImage', Resources.pauseImage)
+        this.load.bitmapFont('atari', Resources.fontAtariImage, Resources.fontAtariMetadata);
     }
     
     create() {

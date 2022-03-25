@@ -1,5 +1,5 @@
 import "phaser";
-import Textures from "./textures";
+import Resources from "./resources"
 import { SceneNames } from "./scene-names";
 
 export default class WinningScene extends Phaser.Scene {
@@ -14,7 +14,7 @@ export default class WinningScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('trophyImage', Textures.trophyImage)
+        this.load.image('trophyImage', Resources.trophyImage)
     }
 
     create() {

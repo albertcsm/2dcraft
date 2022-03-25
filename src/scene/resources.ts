@@ -25,7 +25,7 @@ import fontAtariImage from '../assets/font/atari.png';
 // @ts-ignore
 import fontAtariMetadata from '../assets/font/atari.xml';
 
-export default class Textures {
+export default class Resources {
     static skyImage: string = skyImage;
     static terrainTexture: string = terrainTexture;
     static alexSprite: string = alexSprite;

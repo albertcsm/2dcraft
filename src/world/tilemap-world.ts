@@ -1,4 +1,4 @@
-import Textures from '../scene/textures';
+import Resources from '../scene/resources'
 import worldMapData from '../assets/terrain/world1.json';
 import { TileType } from './tile-type';
 import TileFilter from './tile-filter';
@@ -23,7 +23,7 @@ export default class TilemapWorld {
 
     preload() {
         this.scene.load.tilemapTiledJSON('worldMap', worldMapData);
-        this.scene.load.image('terrainTexture', Textures.terrainTexture);
+        this.scene.load.image('terrainTexture', Resources.terrainTexture)
     }
 
     init() {

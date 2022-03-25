@@ -1,5 +1,5 @@
 import "phaser";
-import Textures from "./textures";
+import Resources from "./resources"
 import { SceneNames } from "./scene-names";
 
 export default class GameoverScene extends Phaser.Scene {
@@ -15,7 +15,7 @@ export default class GameoverScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('buttonImage', Textures.buttonImage)
+        this.load.image('buttonImage', Resources.buttonImage)
     }
 
     create() {

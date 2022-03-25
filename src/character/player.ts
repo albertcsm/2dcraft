@@ -1,5 +1,5 @@
 import 'phaser'
-import Textures from '../scene/textures';
+import Resources from '../scene/resources'
 import Character from './character';
 
 export default class Player implements Character {
@@ -24,7 +24,7 @@ export default class Player implements Character {
     }
 
     preload() {
-        this.scene.load.spritesheet('player', Textures.alexSprite, { frameWidth: 200, frameHeight: 300 });
+        this.scene.load.spritesheet('player', Resources.alexSprite, { frameWidth: 200, frameHeight: 300 });
     }
 
     init(initX: number, initY: number) {

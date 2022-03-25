@@ -1,5 +1,5 @@
 import 'phaser'
-import Textures from "../scene/textures";
+import Resources from "../scene/resources"
 import TilemapWorld from '../world/tilemap-world';
 import Character from './character';
 import Player from './player';
@@ -25,7 +25,7 @@ export default class Zombie implements Character {
     }
 
     static preload(scene: Phaser.Scene) {
-        scene.load.spritesheet('zombie', Textures.zombieSprite, { frameWidth: 220, frameHeight: 300 });
+        scene.load.spritesheet('zombie', Resources.zombieSprite, { frameWidth: 220, frameHeight: 300 });
     }
     
     init(world: TilemapWorld, initX: number, initY: number) {
