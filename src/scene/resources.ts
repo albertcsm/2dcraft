@@ -25,15 +25,15 @@ import fontAtariImage from '../assets/font/atari.png';
 // @ts-ignore
 import fontAtariMetadata from '../assets/font/atari.xml';
 // @ts-ignore
-import putSound from '../assets/sound/put.ogg';
+import putSound from '../assets/sound/put.mp3';
 // @ts-ignore
-import breakSound from '../assets/sound/break.ogg';
+import breakSound from '../assets/sound/break.mp3';
 // @ts-ignore
-import stepSound from '../assets/sound/step.ogg';
+import stepSound from '../assets/sound/step.mp3';
 // @ts-ignore
-import explodeSound from '../assets/sound/explode.ogg';
+import explodeSound from '../assets/sound/explode.mp3';
 // @ts-ignore
-import zombieSound from '../assets/sound/zombie.ogg';
+import zombieSound from '../assets/sound/zombie.mp3';
 
 export default class Resources {
     static skyImage: string = skyImage;
