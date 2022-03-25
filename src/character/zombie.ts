@@ -15,10 +15,12 @@ export default class Zombie implements Character {
     private passiveVelocity?: Phaser.Math.Vector2
     private disabledUntil: number
     private invincibleUntil: number
+    private stopAttachUntil: number
     private chasingAfter?: Player
     private chasingRange: number = Infinity
     private wanderBehavior: WanderBeehavior
     private invincibleTween: Phaser.Tweens.Tween
+    private attackCallback?: () => void
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene
@@ -33,6 +35,7 @@ export default class Zombie implements Character {
         this.passiveVelocity = null
         this.disabledUntil = 0
         this.invincibleUntil = 0
+        this.stopAttachUntil = 0
         this.chasingAfter = null
         this.chasingRange = Infinity
 
@@ -86,7 +89,7 @@ export default class Zombie implements Character {
             const dy = this.chasingAfter.getSprite().y - this.sprite.y
             if (Math.abs(dx) < this.sprite.displayWidth * 3/4) {
                 if (Math.abs(dy) < this.sprite.displayHeight * 2/3) {
-                    this.chasingAfter.hurt()
+                    this.tryAttack()
                 }
             } else if (Math.abs(dx) < this.chasingRange) {
                 vx = dx < 0 ? -50 : 50
@@ -163,4 +166,15 @@ export default class Zombie implements Character {
         this.chasingRange = Infinity
     }
 
+    setAttackCallback(callback: () => void) {
+        this.attackCallback = callback
+    }
+
+    private tryAttack() {
+        if (Date.now() > this.stopAttachUntil) {
+            this.chasingAfter.hurt()
+            this.stopAttachUntil = Date.now() + 2000
+            this.attackCallback?.()
+        }
+    }
 }

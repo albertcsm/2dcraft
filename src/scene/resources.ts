@@ -24,6 +24,16 @@ import trophyImage from '../assets/overlay/trophy.png';
 import fontAtariImage from '../assets/font/atari.png';
 // @ts-ignore
 import fontAtariMetadata from '../assets/font/atari.xml';
+// @ts-ignore
+import putSound from '../assets/sound/put.ogg';
+// @ts-ignore
+import breakSound from '../assets/sound/break.ogg';
+// @ts-ignore
+import stepSound from '../assets/sound/step.ogg';
+// @ts-ignore
+import explodeSound from '../assets/sound/explode.ogg';
+// @ts-ignore
+import zombieSound from '../assets/sound/zombie.ogg';
 
 export default class Resources {
     static skyImage: string = skyImage;
@@ -39,4 +49,9 @@ export default class Resources {
     static trophyImage = trophyImage;
     static fontAtariImage = fontAtariImage;
     static fontAtariMetadata = fontAtariMetadata;
+    static putSound = putSound;
+    static breakSound = breakSound;
+    static stepSound = stepSound;
+    static explodeSound = explodeSound;
+    static zombieSound = zombieSound;
 }

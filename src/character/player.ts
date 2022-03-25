@@ -43,14 +43,14 @@ export default class Player implements Character {
         this.scene.anims.create({
             key: 'left',
             frames: this.scene.anims.generateFrameNumbers('player', { start: 0, end: 3 }),
-            frameRate: 10,
+            frameRate: 8,
             repeat: -1
         });
     
         this.scene.anims.create({
             key: 'right',
             frames: this.scene.anims.generateFrameNumbers('player', { start: 4, end: 7 }),
-            frameRate: 10,
+            frameRate: 8,
             repeat: -1
         });
     

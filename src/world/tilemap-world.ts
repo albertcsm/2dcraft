@@ -16,6 +16,7 @@ export default class TilemapWorld {
     private explosionEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
     private shouldSpreadLavaAfter: number
     private characters: Character[] = []
+    private explodeCallback?: () => void
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene
@@ -114,6 +115,10 @@ export default class TilemapWorld {
         return false
     }
     
+    setExplodeCallback(callback: () => void) {
+        this.explodeCallback = callback
+    }
+
     getAccessibleRange(worldX: number, worldY: number, rangeLeft: number, rangeRight: number): [number, number] {
         let x = Math.floor(worldX / this.tileset.tileWidth)
         let y = Math.floor(worldY / this.tileset.tileHeight)
@@ -290,6 +295,9 @@ export default class TilemapWorld {
     private touchTnt(spirit: Phaser.GameObjects.GameObject, tile: Phaser.Tilemaps.Tile) {
         this.explosionEmitter.resume();
         this.explosionEmitter.explode(10, tile.getCenterX(), tile.getCenterY());
+
+        this.explodeCallback?.()
+
         this.breakTile(tile.x, tile.y)
         this.breakTile(tile.x - 1, tile.y)
         this.breakTile(tile.x + 1, tile.y)

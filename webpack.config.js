@@ -42,7 +42,7 @@ module.exports = (env, options) => {
           use: ['style-loader', 'css-loader'],
         },
         {
-          test: /\.(png|svg|jpg|jpeg|gif|json|xml)$/i,
+          test: /\.(png|svg|jpg|jpeg|gif|json|xml|ogg)$/i,
           type: 'asset/resource',
         },
         {

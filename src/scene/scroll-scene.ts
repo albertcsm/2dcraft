@@ -38,6 +38,7 @@ export default class ScrollScene extends Phaser.Scene {
     private buttonBreak: boolean
     private puttingTile: boolean
     private breakingTile: boolean
+    private stepSound: Phaser.Sound.BaseSound
 
     constructor() {
         super(SceneNames.SCROLL_GAME)
@@ -57,6 +58,11 @@ export default class ScrollScene extends Phaser.Scene {
         this.load.image('pickaxeImage', Resources.pickaxeImage);
         this.load.image('pauseImage', Resources.pauseImage)
         this.load.bitmapFont('atari', Resources.fontAtariImage, Resources.fontAtariMetadata);
+        this.load.audio('putSound', Resources.putSound)
+        this.load.audio('breakSound', Resources.breakSound)
+        this.load.audio('stepSound', Resources.stepSound)
+        this.load.audio('explodeSound', Resources.explodeSound)
+        this.load.audio('zombieSound', Resources.zombieSound)
     }
     
     create() {
@@ -78,6 +84,7 @@ export default class ScrollScene extends Phaser.Scene {
         this.player.init(100, 300)
         this.world.addCharacter(this.player)
         this.world.addObjectTouchedCallback(TileType.CHEST, this.touchChest.bind(this));
+        this.world.setExplodeCallback(() => this.sound.play('explodeSound'));
         this.spawnZombies()
 
         this.physics.world.setBounds(0, 0, this.world.getWidth(), this.world.getHeight())
@@ -89,6 +96,8 @@ export default class ScrollScene extends Phaser.Scene {
             let image = this.add.image(0, 0, 'heartImage').setScale(0.1).setScrollFactor(0);
             this.playerLiveImages.push(image)
         }
+
+        this.stepSound = this.sound.add('stepSound', { loop: true, rate: 1, volume: 0.75 });
 
         // this.cursors = this.input.keyboard.createCursorKeys();
         this.keyUp = this.input.keyboard.addKey('w')
@@ -192,14 +201,22 @@ export default class ScrollScene extends Phaser.Scene {
 
         if (pressedLeft) {
             this.player.moveLeft()
+            if (this.player.getSprite().body.onFloor() && !this.stepSound.isPlaying) {
+                this.stepSound.play()
+            }
         } else if (pressedRight) {
             this.player.moveRight()
+            if (this.player.getSprite().body.onFloor() && !this.stepSound.isPlaying) {
+                this.stepSound.play()
+            }
         } else {
             this.player.stopMoving()
+            this.stepSound.pause()
         } 
         
         if (pressedJump) {
             this.player.jump()
+            this.stepSound.pause()
         }
 
         this.player.update()
@@ -221,6 +238,9 @@ export default class ScrollScene extends Phaser.Scene {
                 let pos = this.player.getSprite().getRightCenter()
                 this.puttingTile = this.world.putObject(TileType.STONE, pos.x + tileSize/2, this.player.getSprite().getBounds().centerY, 0, tileSize/2);
             }
+            if (this.puttingTile) {
+                this.sound.play('putSound')
+            }
         } else if (!pressedPut) {
             this.puttingTile = false
         }
@@ -238,6 +258,9 @@ export default class ScrollScene extends Phaser.Scene {
             } else if (this.player.getFacing() > 0) {
                 let pos = this.player.getSprite().getRightCenter()
                 this.breakingTile = this.world.breakObject(pos.x + tileSize/2, this.player.getSprite().getBounds().centerY - tileSize/2, 0, tileSize/2);
+            }
+            if (this.breakingTile) {
+                this.sound.play('breakSound')
             }
         } else if (!pressedBreak) {
             this.breakingTile = false;
@@ -262,6 +285,7 @@ export default class ScrollScene extends Phaser.Scene {
             
             const zombie = new Zombie(this)
             zombie.init(this.world, tile.getCenterX(), tile.getCenterY())
+            zombie.setAttackCallback(() => this.sound.play('zombieSound'))
             this.world.addCharacter(zombie)
             this.physics.add.collider(this.player.getSprite(), zombie.getSprite())
             this.zombies.forEach(z => this.physics.add.collider(zombie.getSprite(), z.getSprite()))            
