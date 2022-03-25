@@ -1,13 +1,26 @@
 <div class="mc-modal">
-  <div class="mc-menu">
+  <div class="mc-menu" id="setting-menu">
     <div class="mc-label mc-header">Settings</div>
 
     <div class="mc-button" id="peaceful-mode-button">
       <div class="mc-label" id="peaceful-mode-label">Peaceful Mode: OFF</div>
     </div>
 
+    <div class="mc-button" id="restart-button" onclick="document.getElementById('setting-menu').hidden = true; document.getElementById('restart-menu').hidden = false;">
+      <div class="mc-label">Restart</div>
+    </div>
+
     <div class="mc-button" id="done-button">
       <div class="mc-label">Done</div>
+    </div>
+  </div>
+
+  <div class="mc-menu" id="restart-menu" hidden="true" onload="console.log('adf')">
+    <div class="mc-button" id="confirm-restart-button">
+      <div class="mc-label">Restart</div>
+    </div>
+    <div class="mc-button" id="cancel-restart-button" onclick="document.getElementById('restart-menu').hidden = true; document.getElementById('setting-menu').hidden = false;">
+      <div class="mc-label">Cancel</div>
     </div>
   </div>
 </div>

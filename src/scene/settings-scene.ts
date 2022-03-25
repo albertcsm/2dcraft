@@ -23,15 +23,19 @@ export default class SettingsScene extends Phaser.Scene {
 
         this.add.dom(0, 0).setOrigin(0, 0).createFromHTML(settingsHtml);
 
-        document.querySelector('#peaceful-mode-label').innerHTML = this.getPeacefulModeText()
+        document.getElementById('peaceful-mode-label').innerHTML = this.getPeacefulModeText()
 
-        document.querySelector('#peaceful-mode-button').addEventListener('click', () => {
+        document.getElementById('peaceful-mode-button').addEventListener('click', () => {
             this.settings.peacefulMode = !this.settings.peacefulMode
-            document.querySelector('#peaceful-mode-label').innerHTML = this.getPeacefulModeText()
+            document.getElementById('peaceful-mode-label').innerHTML = this.getPeacefulModeText()
         })
 
-        document.querySelector('#done-button').addEventListener('click', () => {
+        document.getElementById('done-button').addEventListener('click', () => {
             this.saveAndDismiss()
+        })
+
+        document.getElementById('confirm-restart-button').addEventListener('click', () => {
+            this.restartGame()
         })
     }
 
@@ -47,6 +51,10 @@ export default class SettingsScene extends Phaser.Scene {
         
         this.scene.stop()
         this.scene.resume(SceneNames.SCROLL_GAME)
+    }
+
+    private restartGame() {
+        location.reload()
     }
 
 }
